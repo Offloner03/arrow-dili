@@ -1,3 +1,10 @@
+Wajib banget dong! Suara Game Over itu krusial buat ngasih penegasan emosional ke pemain kalau mereka gagal (biar rasa *nyesel* pas harus ngulang dari Level 1 makin dapet wkwk).
+
+Kita bisa bikin suara Game Over bergaya retro jadul (nada turun/melorot dari tinggi ke rendah) pakai Web Audio API yang udah kita setup.
+
+Nih, aku udah tambahin fungsi `playGameOverSound()` dan masukin panggilannya ke dalam kondisi saat waktunya habis. Langsung *copy-paste* semua kode ini buat nimpa `index.html` kamu yang terakhir:
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,9 +38,9 @@
     #board {
       width: 350px; height: 350px;
       position: relative; 
-      background: transparent; /* Hilangkan background putih */
+      background: transparent; 
       border-radius: 16px; 
-      box-shadow: none; /* Shadow dihilangkan biar lebih nyatu sama background luar */
+      box-shadow: none; 
       overflow: hidden;
     }
     
@@ -46,10 +53,10 @@
       width: 100%; 
       height: 100%;
       background-image: url('logo.png'); /* Pastikan file bernama logo.png */
-      background-size: cover; /* Biar logonya nutupin full */
+      background-size: cover; 
       background-repeat: no-repeat;
       background-position: center;
-      opacity: 0.15; /* Atur transparansi di sini */
+      opacity: 0.15; 
       pointer-events: none;
       z-index: 0;
     }
@@ -140,7 +147,7 @@
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'sawtooth'; // Suara kasar 8-bit
+      osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(150, audioCtx.currentTime);
       osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.2);
       gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
@@ -155,7 +162,7 @@
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'square'; // Suara retro game
+      osc.type = 'square';
       osc.frequency.setValueAtTime(400, audioCtx.currentTime);
       osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
       osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
@@ -165,6 +172,22 @@
       gain.connect(audioCtx.destination);
       osc.start();
       osc.stop(audioCtx.currentTime + 0.4);
+    }
+
+    // Suara melorot pas Game Over
+    function playGameOverSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth'; 
+      osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.8);
+      gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.8);
     }
 
     function generateLevel(levelIdx) {
@@ -246,12 +269,9 @@
             <path fill="${arr.color}" d="M50 5 L90 45 L65 45 L65 95 L35 95 L35 45 L10 45 Z"/>
           </svg>`;
         
-        // Panggil fungsi saat klik
         el.addEventListener('click', (e) => tryMoveArrow(arr.id, e));
-        
-        // Buat Mobile / Touch support biar gak delay
         el.addEventListener('touchstart', (e) => {
-          e.preventDefault(); // Mencegah double tap zoom di hp
+          e.preventDefault(); 
           tryMoveArrow(arr.id, e.touches[0]);
         }, {passive: false});
 
@@ -282,7 +302,6 @@
       const target = arrows.find(a => a.id === id);
       if (!target) return;
 
-      // Un-suspend audio context jika user klik pertama kali
       if (audioCtx.state === 'suspended') audioCtx.resume();
 
       const el = document.getElementById(`arrow-${id}`);
@@ -301,10 +320,9 @@
         void el.offsetWidth; 
         el.classList.add('blocked');
 
-        playErrorSound(); // Mainkan suara error retro
+        playErrorSound(); 
         timeLeft -= 1;
         
-        // Tangkap posisi klik untuk teks -1s
         const xPos = event.clientX || event.pageX;
         const yPos = event.clientY || event.pageY;
         if (xPos && yPos) showPenaltyText(xPos, yPos);
@@ -335,7 +353,7 @@
       setTimeout(() => {
         el.remove();
         if (arrows.length === 0 && !isGameOver) { 
-          playLevelUpSound(); // Mainkan suara level up
+          playLevelUpSound(); 
           endGame(true); 
         }
       }, 250);
@@ -358,8 +376,15 @@
       isGameOver = true; hasWon = won;
       clearInterval(timerInterval);
       overlay.style.display = 'flex';
-      overlayMsg.innerText = won ? 'Level Clear! 🎉' : 'Game Over! ⏰';
-      actionBtn.innerText = won ? 'Next Level' : 'Try Again';
+      
+      if (won) {
+        overlayMsg.innerText = 'Level Clear! 🎉';
+        actionBtn.innerText = 'Next Level';
+      } else {
+        overlayMsg.innerText = 'Game Over! ⏰';
+        actionBtn.innerText = 'Try Again';
+        playGameOverSound(); // Bunyikan efek game over!
+      }
     }
 
     function handleOverlayClick() {
@@ -375,3 +400,5 @@
   </script>
 </body>
 </html>
+
+```
