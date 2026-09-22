@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arrow Clear Puzzle</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f4f8fb;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+    #game-container {
+      width: 360px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      padding: 0 10px;
+    }
+    .level-text {
+      font-size: 24px;
+      font-weight: 800;
+      color: #24334a;
+    }
+    .timer-bar {
+      flex: 1;
+      height: 8px;
+      background: #e2e8f0;
+      border-radius: 4px;
+      margin: 0 15px;
+      overflow: hidden;
+    }
+    .timer-fill {
+      height: 100%;
+      width: 100%;
+      background: #f59e0b;
+      transition: width 0.1s linear;
+    }
+    .timer-text {
+      font-weight: 700;
+      color: #475569;
+      font-size: 16px;
+      width: 35px;
+      text-align: right;
+    }
+    #board {
+      width: 350px;
+      height: 450px;
+      position: relative;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+    .arrow {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+    }
+    .arrow svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+    }
+    /* Animasi getar ketika terhalang */
+    .blocked {
+      animation: shake 0.3s ease-in-out;
+    }
+    @keyframes shake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-3px, -3px); }
+      40% { transform: translate(3px, 3px); }
+      60% { transform: translate(-3px, 3px); }
+      80% { transform: translate(3px, -2px); }
+    }
+    /* Modal Win / Game Over */
+    #overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.7);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      z-index: 10;
+      border-radius: 16px;
+    }
+    #overlay h2 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+    }
+    #restart-btn {
+      padding: 10px 24px;
+      background: #3b82f6;
+      border: none;
+      color: white;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <div class="header">
+      <div class="level-text" id="level-label">01</div>
+      <div class="timer-bar">
+        <div class="timer-fill" id="timer-fill"></div>
+      </div>
+      <div class="timer-text" id="timer-label">15s</div>
+    </div>
+
+    <div id="board">
+      <div id="overlay">
+        <h2 id="overlay-msg">Level Clear!</h2>
+        <button id="restart-btn" onclick="nextOrRestart()">Next Level</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CELL_SIZE = 50; // px per grid cell
+    const GRID_COLS = 7;
+    const GRID_ROWS = 9;
+
+    const board = document.getElementById('board');
+    const timerFill = document.getElementById('timer-fill');
+    const timerLabel = document.getElementById('timer-label');
+    const overlay = document.getElementById('overlay');
+    const overlayMsg = document.getElementById('overlay-msg');
+    const restartBtn = document.getElementById('restart-btn');
+    const levelLabel = document.getElementById('level-label');
+
+    const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+
+    // Level design: posisi (x,y), arah, dan warna panah
+    const levels = [
+      {
+        time: 15,
+        arrows: [
+          { id: 1, x: 3, y: 1, dir: 'UP', color: '#f97316' },
+          { id: 2, x: 2, y: 3, dir: 'UP', color: '#8b5cf6' },
+          { id: 3, x: 4, y: 3, dir: 'RIGHT', color: '#3b82f6' },
+          { id: 4, x: 2, y: 4, dir: 'LEFT', color: '#10b981' },
+          { id: 5, x: 4, y: 4, dir: 'RIGHT', color: '#eab308' },
+          { id: 6, x: 2, y: 5, dir: 'UP', color: '#8b5cf6' },
+          { id: 7, x: 3, y: 5, dir: 'DOWN', color: '#f97316' },
+          { id: 8, x: 4, y: 5, dir: 'DOWN', color: '#06b6d4' },
+          { id: 9, x: 5, y: 5, dir: 'RIGHT', color: '#ec4899' },
+          { id: 10, x: 5, y: 6, dir: 'RIGHT', color: '#10b981' },
+        ]
+      }
+    ];
+
+    let currentLevel = 0;
+    let arrows = [];
+    let timeLeft = 0;
+    let maxTime = 0;
+    let timerInterval = null;
+    let isGameOver = false;
+
+    function getRotation(dir) {
+      switch (dir) {
+        case 'UP': return 0;
+        case 'RIGHT': return 90;
+        case 'DOWN': return 180;
+        case 'LEFT': return 270;
+      }
+    }
+
+    function initLevel(lvlIdx) {
+      clearInterval(timerInterval);
+      board.querySelectorAll('.arrow').forEach(el => el.remove());
+      overlay.style.display = 'none';
+      isGameOver = false;
+
+      const lvl = levels[lvlIdx];
+      levelLabel.innerText = String(lvlIdx + 1).padStart(2, '0');
+      maxTime = lvl.time;
+      timeLeft = lvl.time;
+      arrows = JSON.parse(JSON.stringify(lvl.arrows));
+
+      arrows.forEach(arr => {
+        const el = document.createElement('div');
+        el.className = 'arrow';
+        el.id = `arrow-${arr.id}`;
+        el.style.left = `${arr.x * CELL_SIZE}px`;
+        el.style.top = `${arr.y * CELL_SIZE}px`;
+        
+        const deg = getRotation(arr.dir);
+        el.innerHTML = `
+          <svg viewBox="0 0 24 24" style="transform: rotate(${deg}deg);">
+            <path fill="${arr.color}" d="M12 2L4 10h5v12h6V10h5L12 2z"/>
+          </svg>
+        `;
+
+        el.addEventListener('click', () => tryMoveArrow(arr.id));
+        board.appendChild(el);
+      });
+
+      startTimer();
+    }
+
+    function startTimer() {
+      updateTimerUI();
+      timerInterval = setInterval(() => {
+        timeLeft -= 0.1;
+        if (timeLeft <= 0) {
+          timeLeft = 0;
+          endGame(false);
+        }
+        updateTimerUI();
+      }, 100);
+    }
+
+    function updateTimerUI() {
+      timerLabel.innerText = `${Math.ceil(timeLeft)}s`;
+      const pct = (timeLeft / maxTime) * 100;
+      timerFill.style.width = `${pct}%`;
+      if (pct < 30) {
+        timerFill.style.background = '#ef4444';
+      } else {
+        timerFill.style.background = '#f59e0b';
+      }
+    }
+
+    function tryMoveArrow(id) {
+      if (isGameOver) return;
+      const target = arrows.find(a => a.id === id);
+      if (!target) return;
+
+      const el = document.getElementById(`arrow-${id}`);
+      
+      // Cek apakah ada panah lain di depan jalurnya
+      const blocked = arrows.some(other => {
+        if (other.id === target.id) return false;
+        if (target.dir === 'UP') return other.x === target.x && other.y < target.y;
+        if (target.dir === 'DOWN') return other.x === target.x && other.y > target.y;
+        if (target.dir === 'LEFT') return other.y === target.y && other.x < target.x;
+        if (target.dir === 'RIGHT') return other.y === target.y && other.x > target.x;
+        return false;
+      });
+
+      if (blocked) {
+        // Efek mental / getar jika tertabrak
+        el.classList.remove('blocked');
+        void el.offsetWidth; // re-trigger animation
+        el.classList.add('blocked');
+        return;
+      }
+
+      // Animasi meluncur keluar board
+      let destX = target.x * CELL_SIZE;
+      let destY = target.y * CELL_SIZE;
+
+      if (target.dir === 'UP') destY = -60;
+      if (target.dir === 'DOWN') destY = 500;
+      if (target.dir === 'LEFT') destX = -60;
+      if (target.dir === 'RIGHT') destX = 400;
+
+      el.style.transform = `translate(${destX - target.x * CELL_SIZE}px, ${destY - target.y * CELL_SIZE}px)`;
+      el.style.opacity = '0';
+
+      // Hapus dari data aktif
+      arrows = arrows.filter(a => a.id !== id);
+
+      setTimeout(() => {
+        el.remove();
+        if (arrows.length === 0) {
+          endGame(true);
+        }
+      }, 250);
+    }
+
+    function endGame(won) {
+      isGameOver = true;
+      clearInterval(timerInterval);
+      overlay.style.display = 'flex';
+
+      if (won) {
+        overlayMsg.innerText = 'Puzzle Cleared! 🎉';
+        restartBtn.innerText = 'Play Again';
+      } else {
+        overlayMsg.innerText = 'Time Out! ⏰';
+        restartBtn.innerText = 'Try Again';
+      }
+    }
+
+    function nextOrRestart() {
+      initLevel(currentLevel);
+    }
+
+    // Jalankan level awal
+    initLevel(0);
+  </script>
+</body>
+</html>
