@@ -43,7 +43,7 @@
       border-radius: 4px; margin: 0 15px; overflow: hidden;
     }
     .timer-fill { height: 100%; width: 100%; background: #f59e0b; transition: width 0.1s linear; }
-    .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 40px; text-align: right; }
+    .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 45px; text-align: right; }
     
     #board {
       width: 350px; height: 350px;
@@ -118,7 +118,7 @@
       <img src="logo.png" alt="Dlicom" style="height: 24px; margin-right: 10px;">
       <div class="level-text" id="level-label">Level 1</div>
       <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
-      <div class="timer-text" id="timer-label">15s</div>
+      <div class="timer-text" id="timer-label">15.0s</div>
     </div>
     
     <div id="board">
@@ -201,89 +201,61 @@
     }
 
     function generateLevel(levelIdx) {
-      let numArrows = Math.min(3 + Math.floor(levelIdx * 1.5), 45);
-      
-      // 👇 INI YANG BIKIN SUSAH: Waktu dipersingkat drastis! 👇
-      // Minimal 6 detik, dan cuma dapet +0.85 detik per panah
+      // Bikin jumlah panah naik lebih cepet tiap levelnya (maksimal 49 panah / full board)
+      let numArrows = Math.min(3 + Math.floor(levelIdx * 2), 49); 
       let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
       
       let newArrows = [];
+      const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
       
       for (let i = 0; i < numArrows; i++) {
-        let candidateCells = [];
+        let candidates = [];
         
-        if (newArrows.length === 0) {
-          candidateCells.push({x: Math.floor(GRID_COLS/2), y: Math.floor(GRID_ROWS/2)});
-        } else {
-          for (let x = 0; x < GRID_COLS; x++) {
-            for (let y = 0; y < GRID_ROWS; y++) {
-              if (!newArrows.some(a => a.x === x && a.y === y)) {
-                let isAdjacent = newArrows.some(a => 
-                  (Math.abs(a.x - x) === 1 && a.y === y) || 
-                  (Math.abs(a.y - y) === 1 && a.x === x)
-                );
-                if (isAdjacent) candidateCells.push({x, y});
-              }
-            }
-          }
-        }
-        
-        candidateCells.sort(() => Math.random() - 0.5);
-        
-        let placed = false;
-        for (let cell of candidateCells) {
-          let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
-          dirs.sort(() => Math.random() - 0.5); 
-          
-          for (let dir of dirs) {
-            let hit = newArrows.some(other => {
-              if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
-              if (dir === 'DOWN') return other.x === cell.x && other.y > cell.y;
-              if (dir === 'LEFT') return other.y === cell.y && other.x < cell.x;
-              if (dir === 'RIGHT') return other.y === cell.y && other.x > cell.x;
-              return false;
-            });
+        // Cek semua petak kosong dan semua arah
+        for (let x = 0; x < GRID_COLS; x++) {
+          for (let y = 0; y < GRID_ROWS; y++) {
+            if (newArrows.some(a => a.x === x && a.y === y)) continue; // Kalo udah ada panah, skip
             
-            if (!hit) {
-              newArrows.push({
-                id: i + 1, x: cell.x, y: cell.y, dir: dir,
-                color: COLORS[Math.floor(Math.random() * COLORS.length)]
-              });
-              placed = true;
-              break;
-            }
-          }
-          if (placed) break;
-        }
-
-        if (!placed) {
-          let fallbackCells = [];
-          for (let x = 0; x < GRID_COLS; x++) {
-            for (let y = 0; y < GRID_ROWS; y++) {
-              if (!newArrows.some(a => a.x === x && a.y === y)) fallbackCells.push({x, y});
-            }
-          }
-          fallbackCells.sort(() => Math.random() - 0.5);
-          for (let cell of fallbackCells) {
-            let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
-            dirs.sort(() => Math.random() - 0.5);
             for (let dir of dirs) {
+              // Pastikan panah baru ini BISA keluar (tidak nabrak panah yg udah ditaruh sebelumnya)
               let hit = newArrows.some(other => {
-                if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
-                if (dir === 'DOWN') return other.x === cell.x && other.y > cell.y;
-                if (dir === 'LEFT') return other.y === cell.y && other.x < cell.x;
-                if (dir === 'RIGHT') return other.y === cell.y && other.x > cell.x;
+                if (dir === 'UP') return other.x === x && other.y < y;
+                if (dir === 'DOWN') return other.x === x && other.y > y;
+                if (dir === 'LEFT') return other.y === y && other.x < x;
+                if (dir === 'RIGHT') return other.y === y && other.x > x;
                 return false;
               });
+              
               if (!hit) {
-                newArrows.push({ id: i + 1, x: cell.x, y: cell.y, dir: dir, color: COLORS[Math.floor(Math.random() * COLORS.length)] });
-                placed = true;
-                break;
+                // Algoritma Smart Interlocking: Hitung berapa banyak panah lama yg bakal TERKUNCI sama panah baru ini
+                let blockScore = 0;
+                newArrows.forEach(other => {
+                  if (other.dir === 'UP' && other.x === x && y < other.y) blockScore++;
+                  if (other.dir === 'DOWN' && other.x === x && y > other.y) blockScore++;
+                  if (other.dir === 'LEFT' && other.y === y && x < other.x) blockScore++;
+                  if (other.dir === 'RIGHT' && other.y === y && x > other.x) blockScore++;
+                });
+                
+                candidates.push({x, y, dir, blockScore});
               }
             }
-            if (placed) break;
           }
         }
+        
+        if (candidates.length === 0) break; // Kalo mentok, stop aja
+        
+        // Urutkan kandidat berdasarkan skor tertinggi (yg paling banyak ngunci panah lain)
+        candidates.sort((a, b) => b.blockScore - a.blockScore);
+        
+        // Ambil kandidat dengan skor terbaik, lalu pilih acak dari yg terbaik itu
+        let bestScore = candidates[0].blockScore;
+        let bestCandidates = candidates.filter(c => c.blockScore === bestScore);
+        let chosen = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
+        
+        newArrows.push({
+          id: i + 1, x: chosen.x, y: chosen.y, dir: chosen.dir,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)]
+        });
       }
       return { time: timeLimit, arrows: newArrows };
     }
@@ -342,7 +314,6 @@
     }
 
     function updateTimerUI() {
-      // Ditambahin toFixed(1) biar desimal waktunya kelihatan deg-degan
       timerLabel.innerText = `${Math.max(0, timeLeft).toFixed(1)}s`; 
       const pct = (timeLeft / maxTime) * 100;
       timerFill.style.width = `${pct}%`;
