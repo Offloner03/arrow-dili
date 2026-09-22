@@ -8,25 +8,43 @@
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
     body {
       margin: 0; padding: 0;
-      background: #f4f8fb;
+      background: #0f172a; /* Background gelap / Navy */
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       min-height: 100vh; overflow: hidden;
     }
-    #game-container { width: 360px; display: flex; flex-direction: column; align-items: center; }
+
+    /* 👇 WATERMARK LUAR (Serong ala Shutterstock pakai gambar bg-logo.png) 👇 */
+    .watermark-bg {
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background-image: url('bg-logo.png'); /* Ganti nama file gambar kedua kamu jadi ini */
+      background-repeat: repeat; 
+      background-size: 300px; /* Ukuran gambar background, bisa disesuaikan */
+      transform: rotate(-25deg); 
+      opacity: 0.05; 
+      pointer-events: none; 
+      z-index: -1; 
+    }
+
+    #game-container { width: 360px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 5; }
     
     .header {
       width: 100%; display: flex; justify-content: space-between;
       align-items: center; margin-bottom: 15px; padding: 0 10px;
     }
-    .level-text { font-size: 24px; font-weight: 800; color: #24334a; white-space: nowrap; }
+    
+    .level-text { font-size: 24px; font-weight: 800; color: #ffffff; white-space: nowrap; }
     .timer-bar {
-      flex: 1; height: 8px; background: #e2e8f0;
+      flex: 1; height: 8px; background: #334155;
       border-radius: 4px; margin: 0 15px; overflow: hidden;
     }
     .timer-fill { height: 100%; width: 100%; background: #f59e0b; transition: width 0.1s linear; }
-    .timer-text { font-weight: 700; color: #475569; font-size: 16px; width: 40px; text-align: right; }
+    .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 40px; text-align: right; }
     
     #board {
       width: 350px; height: 350px;
@@ -36,20 +54,21 @@
       box-shadow: none; 
       overflow: hidden;
     }
-    
-    /* Watermark Logo full seukuran board */
+
+    /* 👇 WATERMARK DALAM (Tengah board pakai gambar logo.png) 👇 */
     #board::before {
       content: "";
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%; 
-      height: 100%;
-      background-image: url('logo.png'); /* Pastikan file bernama logo.png */
-      background-size: cover; 
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 280px; 
+      height: 280px;
+      background-image: url('logo.png'); /* Gambar pertama kamu */
+      background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
-      opacity: 0.15; 
+      opacity: 0.15;
       pointer-events: none;
       z-index: 0;
     }
@@ -60,7 +79,7 @@
       transition: transform 0.25s ease-out, opacity 0.25s ease-out;
       z-index: 1; 
     }
-    .arrow svg { width: 90%; height: 90%; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
+    .arrow svg { width: 90%; height: 90%; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)); }
     .blocked { animation: shake 0.3s ease-in-out; }
     
     @keyframes shake {
@@ -93,6 +112,8 @@
   </style>
 </head>
 <body>
+
+  <div class="watermark-bg"></div>
 
   <div id="game-container">
     <div class="header">
@@ -132,7 +153,6 @@
     let isGameOver = false;
     let hasWon = false;
 
-    // AUDIO CONTEXT (Web Audio API)
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
@@ -167,7 +187,6 @@
       osc.stop(audioCtx.currentTime + 0.4);
     }
 
-    // Suara melorot pas Game Over
     function playGameOverSound() {
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
@@ -376,7 +395,7 @@
       } else {
         overlayMsg.innerText = 'Game Over! ⏰';
         actionBtn.innerText = 'Try Again';
-        playGameOverSound(); // Bunyikan efek game over!
+        playGameOverSound();
       }
     }
 
