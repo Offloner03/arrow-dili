@@ -30,25 +30,26 @@
     
     #board {
       width: 350px; height: 350px;
-      position: relative; background: #ffffff;
-      border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      position: relative; 
+      background: transparent; /* Hilangkan background putih */
+      border-radius: 16px; 
+      box-shadow: none; /* Shadow dihilangkan biar lebih nyatu sama background luar */
       overflow: hidden;
     }
     
-    /* Watermark Logo di tengah board - Udah digedein */
+    /* Watermark Logo full seukuran board */
     #board::before {
       content: "";
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 300px; 
-      height: 300px;
+      top: 0;
+      left: 0;
+      width: 100%; 
+      height: 100%;
       background-image: url('logo.png'); /* Pastikan file bernama logo.png */
-      background-size: contain;
+      background-size: cover; /* Biar logonya nutupin full */
       background-repeat: no-repeat;
       background-position: center;
-      opacity: 0.15;
+      opacity: 0.15; /* Atur transparansi di sini */
       pointer-events: none;
       z-index: 0;
     }
@@ -57,7 +58,7 @@
       position: absolute; width: 50px; height: 50px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: transform 0.25s ease-out, opacity 0.25s ease-out;
-      z-index: 1; /* Supaya panah berada di atas watermark */
+      z-index: 1; 
     }
     .arrow svg { width: 90%; height: 90%; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
     .blocked { animation: shake 0.3s ease-in-out; }
@@ -75,23 +76,19 @@
       display: none; flex-direction: column; align-items: center;
       justify-content: center; color: #fff; z-index: 10; border-radius: 16px;
     }
-    #overlay h2 { margin: 0 0 10px 0; font-size: 28px; }
+    #overlay h2 { margin: 0 0 10px 0; font-size: 28px; text-align: center; }
     #action-btn {
       padding: 10px 24px; background: #3b82f6; border: none; color: white;
       font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px;
     }
     .penalty-text {
-      position: absolute;
-      color: #ef4444;
-      font-weight: bold;
-      font-size: 20px;
-      pointer-events: none;
-      animation: floatUp 0.5s ease-out forwards;
-      z-index: 20;
+      position: absolute; color: #ef4444; font-weight: bold; font-size: 24px;
+      pointer-events: none; animation: floatUp 0.6s ease-out forwards; z-index: 20;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     @keyframes floatUp {
-      0% { opacity: 1; transform: translateY(0); }
-      100% { opacity: 0; transform: translateY(-20px); }
+      0% { opacity: 1; transform: translateY(0) scale(1); }
+      100% { opacity: 0; transform: translateY(-30px) scale(1.5); }
     }
   </style>
 </head>
@@ -100,7 +97,6 @@
   <div id="game-container">
     <div class="header">
       <img src="logo.png" alt="Dlicom" style="height: 24px; margin-right: 10px;">
-      
       <div class="level-text" id="level-label">Level 1</div>
       <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
       <div class="timer-text" id="timer-label">15s</div>
@@ -135,6 +131,41 @@
     let timerInterval = null;
     let isGameOver = false;
     let hasWon = false;
+
+    // AUDIO CONTEXT (Web Audio API)
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playErrorSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth'; // Suara kasar 8-bit
+      osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.2);
+    }
+
+    function playLevelUpSound() {
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'square'; // Suara retro game
+      osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+      osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.4);
+    }
 
     function generateLevel(levelIdx) {
       let numArrows = Math.min(3 + Math.floor(levelIdx * 1.5), 45);
@@ -214,7 +245,16 @@
           <svg viewBox="0 0 100 100" style="transform: rotate(${deg}deg);">
             <path fill="${arr.color}" d="M50 5 L90 45 L65 45 L65 95 L35 95 L35 45 L10 45 Z"/>
           </svg>`;
+        
+        // Panggil fungsi saat klik
         el.addEventListener('click', (e) => tryMoveArrow(arr.id, e));
+        
+        // Buat Mobile / Touch support biar gak delay
+        el.addEventListener('touchstart', (e) => {
+          e.preventDefault(); // Mencegah double tap zoom di hp
+          tryMoveArrow(arr.id, e.touches[0]);
+        }, {passive: false});
+
         board.appendChild(el);
       });
 
@@ -237,11 +277,13 @@
       timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
     }
 
-    // Nambahin parameter event (e) buat ngambil posisi klik saat muncul teks penalti
     function tryMoveArrow(id, event) {
       if (isGameOver) return;
       const target = arrows.find(a => a.id === id);
       if (!target) return;
+
+      // Un-suspend audio context jika user klik pertama kali
+      if (audioCtx.state === 'suspended') audioCtx.resume();
 
       const el = document.getElementById(`arrow-${id}`);
       
@@ -255,18 +297,18 @@
       });
 
       if (blocked) {
-        // Efek getar
         el.classList.remove('blocked');
         void el.offsetWidth; 
         el.classList.add('blocked');
 
-        // Kurangi waktu 1 detik
+        playErrorSound(); // Mainkan suara error retro
         timeLeft -= 1;
         
-        // Munculin teks "-1s" ngambang di lokasi klik
-        showPenaltyText(event.clientX, event.clientY);
+        // Tangkap posisi klik untuk teks -1s
+        const xPos = event.clientX || event.pageX;
+        const yPos = event.clientY || event.pageY;
+        if (xPos && yPos) showPenaltyText(xPos, yPos);
 
-        // Kalau abis dipotong 1 detik malah jadi minus atau 0, langsung Game Over
         if (timeLeft <= 0) {
           timeLeft = 0;
           updateTimerUI();
@@ -292,32 +334,31 @@
 
       setTimeout(() => {
         el.remove();
-        if (arrows.length === 0 && !isGameOver) { endGame(true); }
+        if (arrows.length === 0 && !isGameOver) { 
+          playLevelUpSound(); // Mainkan suara level up
+          endGame(true); 
+        }
       }, 250);
     }
 
-    // Fungsi tambahan buat nampilin teks merah "-1s"
     function showPenaltyText(x, y) {
       const penaltyEl = document.createElement('div');
       penaltyEl.className = 'penalty-text';
       penaltyEl.innerText = '-1s';
       
-      // Hitung posisi relatif ke board
       const boardRect = board.getBoundingClientRect();
-      penaltyEl.style.left = `${x - boardRect.left - 15}px`;
-      penaltyEl.style.top = `${y - boardRect.top - 15}px`;
+      penaltyEl.style.left = `${x - boardRect.left - 20}px`;
+      penaltyEl.style.top = `${y - boardRect.top - 20}px`;
       
       board.appendChild(penaltyEl);
-      
-      // Hapus elemen setelah animasinya kelar (0.5 detik)
-      setTimeout(() => penaltyEl.remove(), 500);
+      setTimeout(() => penaltyEl.remove(), 600);
     }
 
     function endGame(won) {
       isGameOver = true; hasWon = won;
       clearInterval(timerInterval);
       overlay.style.display = 'flex';
-      overlayMsg.innerText = won ? 'Level Clear! 🎉' : 'Time Out! ⏰';
+      overlayMsg.innerText = won ? 'Level Clear! 🎉' : 'Game Over! ⏰';
       actionBtn.innerText = won ? 'Next Level' : 'Try Again';
     }
 
@@ -325,7 +366,6 @@
       if (hasWon) {
         currentLevel++;
       } else {
-        // Kalau kalah, balik ke level 1
         currentLevel = 1;
       }
       initLevel(currentLevel);
