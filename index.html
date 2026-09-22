@@ -15,30 +15,53 @@
       min-height: 100vh; overflow: hidden;
     }
     #game-container { width: 360px; display: flex; flex-direction: column; align-items: center; }
+    
     .header {
       width: 100%; display: flex; justify-content: space-between;
       align-items: center; margin-bottom: 15px; padding: 0 10px;
     }
-    .level-text { font-size: 24px; font-weight: 800; color: #24334a; }
+    .level-text { font-size: 24px; font-weight: 800; color: #24334a; white-space: nowrap; }
     .timer-bar {
       flex: 1; height: 8px; background: #e2e8f0;
       border-radius: 4px; margin: 0 15px; overflow: hidden;
     }
     .timer-fill { height: 100%; width: 100%; background: #f59e0b; transition: width 0.1s linear; }
     .timer-text { font-weight: 700; color: #475569; font-size: 16px; width: 40px; text-align: right; }
+    
     #board {
-      width: 350px; height: 350px; /* Pas untuk grid 7x7 */
+      width: 350px; height: 350px;
       position: relative; background: #ffffff;
       border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
       overflow: hidden;
     }
+    
+    /* Watermark Logo di tengah board */
+    #board::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px;
+      height: 200px;
+      background-image: url('logo.png'); /* Pastikan file bernama logo.png */
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
+
     .arrow {
       position: absolute; width: 50px; height: 50px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: transform 0.25s ease-out, opacity 0.25s ease-out;
+      z-index: 1; /* Supaya panah berada di atas watermark */
     }
     .arrow svg { width: 90%; height: 90%; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
     .blocked { animation: shake 0.3s ease-in-out; }
+    
     @keyframes shake {
       0%, 100% { transform: translate(0, 0); }
       20% { transform: translate(-4px, -4px); }
@@ -46,6 +69,7 @@
       60% { transform: translate(-4px, 4px); }
       80% { transform: translate(4px, -2px); }
     }
+    
     #overlay {
       position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85);
       display: none; flex-direction: column; align-items: center;
@@ -62,10 +86,14 @@
 
   <div id="game-container">
     <div class="header">
+      <!-- Logo di Header -->
+      <img src="logo.png" alt="Dlicom" style="height: 24px; margin-right: 10px;">
+      
       <div class="level-text" id="level-label">Level 1</div>
       <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
       <div class="timer-text" id="timer-label">15s</div>
     </div>
+    
     <div id="board">
       <div id="overlay">
         <h2 id="overlay-msg">Level Clear! 🎉</h2>
@@ -96,9 +124,7 @@
     let isGameOver = false;
     let hasWon = false;
 
-    // GENERATOR LEVEL OTOMATIS
     function generateLevel(levelIdx) {
-      // Makin tinggi level, makin banyak jumlah panah (maksimal 45 dari total 49 petak)
       let numArrows = Math.min(3 + Math.floor(levelIdx * 1.5), 45);
       let timeLimit = Math.max(10, Math.floor(numArrows * 1.5)); 
       
@@ -114,16 +140,14 @@
           }
         }
         
-        // Acak petak kosong
         emptyCells.sort(() => Math.random() - 0.5);
         
         let placed = false;
         for (let cell of emptyCells) {
           let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
-          dirs.sort(() => Math.random() - 0.5); // Acak arah panah
+          dirs.sort(() => Math.random() - 0.5); 
           
           for (let dir of dirs) {
-            // Cek apakah jalur ini nabrak panah yg SUDAH ada
             let hit = newArrows.some(other => {
               if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
               if (dir === 'DOWN') return other.x === cell.x && other.y > cell.y;
@@ -132,7 +156,6 @@
               return false;
             });
             
-            // Jika jalurnya kosong, taruh panah di sini (Dijamin pasti bisa dikeluarkan pemain)
             if (!hit) {
               newArrows.push({
                 id: i + 1, x: cell.x, y: cell.y, dir: dir,
@@ -160,7 +183,7 @@
       hasWon = false;
 
       levelLabel.innerText = `Level ${lvlIdx}`;
-      const lvlData = generateLevel(lvlIdx); // Panggil Generator!
+      const lvlData = generateLevel(lvlIdx);
       
       maxTime = lvlData.time;
       timeLeft = lvlData.time;
