@@ -35,15 +35,15 @@
       overflow: hidden;
     }
     
-    /* Watermark Logo di tengah board */
+    /* Watermark Logo di tengah board - Udah digedein */
     #board::before {
       content: "";
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 280px;
-      height: 280px;
+      width: 300px; 
+      height: 300px;
       background-image: url('logo.png'); /* Pastikan file bernama logo.png */
       background-size: contain;
       background-repeat: no-repeat;
@@ -80,13 +80,25 @@
       padding: 10px 24px; background: #3b82f6; border: none; color: white;
       font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px;
     }
+    .penalty-text {
+      position: absolute;
+      color: #ef4444;
+      font-weight: bold;
+      font-size: 20px;
+      pointer-events: none;
+      animation: floatUp 0.5s ease-out forwards;
+      z-index: 20;
+    }
+    @keyframes floatUp {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(-20px); }
+    }
   </style>
 </head>
 <body>
 
   <div id="game-container">
     <div class="header">
-      <!-- Logo di Header -->
       <img src="logo.png" alt="Dlicom" style="height: 24px; margin-right: 10px;">
       
       <div class="level-text" id="level-label">Level 1</div>
@@ -178,6 +190,7 @@
     function initLevel(lvlIdx) {
       clearInterval(timerInterval);
       board.querySelectorAll('.arrow').forEach(el => el.remove());
+      board.querySelectorAll('.penalty-text').forEach(el => el.remove());
       overlay.style.display = 'none';
       isGameOver = false;
       hasWon = false;
@@ -201,7 +214,7 @@
           <svg viewBox="0 0 100 100" style="transform: rotate(${deg}deg);">
             <path fill="${arr.color}" d="M50 5 L90 45 L65 45 L65 95 L35 95 L35 45 L10 45 Z"/>
           </svg>`;
-        el.addEventListener('click', () => tryMoveArrow(arr.id));
+        el.addEventListener('click', (e) => tryMoveArrow(arr.id, e));
         board.appendChild(el);
       });
 
@@ -224,7 +237,8 @@
       timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
     }
 
-    function tryMoveArrow(id) {
+    // Nambahin parameter event (e) buat ngambil posisi klik saat muncul teks penalti
+    function tryMoveArrow(id, event) {
       if (isGameOver) return;
       const target = arrows.find(a => a.id === id);
       if (!target) return;
@@ -241,9 +255,25 @@
       });
 
       if (blocked) {
+        // Efek getar
         el.classList.remove('blocked');
         void el.offsetWidth; 
         el.classList.add('blocked');
+
+        // Kurangi waktu 1 detik
+        timeLeft -= 1;
+        
+        // Munculin teks "-1s" ngambang di lokasi klik
+        showPenaltyText(event.clientX, event.clientY);
+
+        // Kalau abis dipotong 1 detik malah jadi minus atau 0, langsung Game Over
+        if (timeLeft <= 0) {
+          timeLeft = 0;
+          updateTimerUI();
+          endGame(false);
+        } else {
+          updateTimerUI();
+        }
         return;
       }
 
@@ -266,6 +296,23 @@
       }, 250);
     }
 
+    // Fungsi tambahan buat nampilin teks merah "-1s"
+    function showPenaltyText(x, y) {
+      const penaltyEl = document.createElement('div');
+      penaltyEl.className = 'penalty-text';
+      penaltyEl.innerText = '-1s';
+      
+      // Hitung posisi relatif ke board
+      const boardRect = board.getBoundingClientRect();
+      penaltyEl.style.left = `${x - boardRect.left - 15}px`;
+      penaltyEl.style.top = `${y - boardRect.top - 15}px`;
+      
+      board.appendChild(penaltyEl);
+      
+      // Hapus elemen setelah animasinya kelar (0.5 detik)
+      setTimeout(() => penaltyEl.remove(), 500);
+    }
+
     function endGame(won) {
       isGameOver = true; hasWon = won;
       clearInterval(timerInterval);
@@ -275,7 +322,12 @@
     }
 
     function handleOverlayClick() {
-      if (hasWon) currentLevel++;
+      if (hasWon) {
+        currentLevel++;
+      } else {
+        // Kalau kalah, balik ke level 1
+        currentLevel = 1;
+      }
       initLevel(currentLevel);
     }
 
