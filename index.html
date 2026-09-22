@@ -5,91 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Arrow Clear Puzzle</title>
   <style>
-    * {
-      box-sizing: border-box;
-      user-select: none;
-      -webkit-user-select: none;
-    }
+    * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       background: #f4f8fb;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      overflow: hidden;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      min-height: 100vh; overflow: hidden;
     }
-    #game-container {
-      width: 360px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+    #game-container { width: 360px; display: flex; flex-direction: column; align-items: center; }
     .header {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      padding: 0 10px;
+      width: 100%; display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 15px; padding: 0 10px;
     }
-    .level-text {
-      font-size: 24px;
-      font-weight: 800;
-      color: #24334a;
-    }
+    .level-text { font-size: 24px; font-weight: 800; color: #24334a; }
     .timer-bar {
-      flex: 1;
-      height: 8px;
-      background: #e2e8f0;
-      border-radius: 4px;
-      margin: 0 15px;
-      overflow: hidden;
+      flex: 1; height: 8px; background: #e2e8f0;
+      border-radius: 4px; margin: 0 15px; overflow: hidden;
     }
-    .timer-fill {
-      height: 100%;
-      width: 100%;
-      background: #f59e0b;
-      transition: width 0.1s linear;
-    }
-    .timer-text {
-      font-weight: 700;
-      color: #475569;
-      font-size: 16px;
-      width: 35px;
-      text-align: right;
-    }
+    .timer-fill { height: 100%; width: 100%; background: #f59e0b; transition: width 0.1s linear; }
+    .timer-text { font-weight: 700; color: #475569; font-size: 16px; width: 40px; text-align: right; }
     #board {
-      width: 350px;
-      height: 400px;
-      position: relative;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      width: 350px; height: 350px; /* Pas untuk grid 7x7 */
+      position: relative; background: #ffffff;
+      border-radius: 16px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
       overflow: hidden;
     }
     .arrow {
-      position: absolute;
-      width: 50px; /* Ukuran petak penuh agar berdempetan */
-      height: 50px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      position: absolute; width: 50px; height: 50px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
       transition: transform 0.25s ease-out, opacity 0.25s ease-out;
     }
-    /* Mengubah bentuk SVG menjadi lebih panjang (stick) seperti di referensi */
-    .arrow svg {
-      width: 90%;
-      height: 90%;
-      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
-    }
-    .blocked {
-      animation: shake 0.3s ease-in-out;
-    }
+    .arrow svg { width: 90%; height: 90%; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2)); }
+    .blocked { animation: shake 0.3s ease-in-out; }
     @keyframes shake {
       0%, 100% { transform: translate(0, 0); }
       20% { transform: translate(-4px, -4px); }
@@ -98,31 +47,14 @@
       80% { transform: translate(4px, -2px); }
     }
     #overlay {
-      position: absolute;
-      inset: 0;
-      background: rgba(15, 23, 42, 0.85);
-      display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      z-index: 10;
-      border-radius: 16px;
+      position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85);
+      display: none; flex-direction: column; align-items: center;
+      justify-content: center; color: #fff; z-index: 10; border-radius: 16px;
     }
-    #overlay h2 {
-      margin: 0 0 10px 0;
-      font-size: 28px;
-    }
+    #overlay h2 { margin: 0 0 10px 0; font-size: 28px; }
     #action-btn {
-      padding: 10px 24px;
-      background: #3b82f6;
-      border: none;
-      color: white;
-      font-weight: 700;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 16px;
-      margin-top: 10px;
+      padding: 10px 24px; background: #3b82f6; border: none; color: white;
+      font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px;
     }
   </style>
 </head>
@@ -131,15 +63,12 @@
   <div id="game-container">
     <div class="header">
       <div class="level-text" id="level-label">Level 1</div>
-      <div class="timer-bar">
-        <div class="timer-fill" id="timer-fill"></div>
-      </div>
+      <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
       <div class="timer-text" id="timer-label">15s</div>
     </div>
-
     <div id="board">
       <div id="overlay">
-        <h2 id="overlay-msg">Level Clear!</h2>
+        <h2 id="overlay-msg">Level Clear! 🎉</h2>
         <button id="action-btn" onclick="handleOverlayClick()">Next Level</button>
       </div>
     </div>
@@ -147,6 +76,9 @@
 
   <script>
     const CELL_SIZE = 50; 
+    const GRID_COLS = 7;
+    const GRID_ROWS = 7;
+    const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4'];
     
     const board = document.getElementById('board');
     const timerFill = document.getElementById('timer-fill');
@@ -156,40 +88,7 @@
     const actionBtn = document.getElementById('action-btn');
     const levelLabel = document.getElementById('level-label');
 
-    // Desain level berdempetan (koordinat x,y saling bersebelahan)
-    const levels = [
-      {
-        time: 10,
-        arrows: [
-          { id: 1, x: 3, y: 3, dir: 'UP', color: '#f97316' },
-          { id: 2, x: 3, y: 4, dir: 'DOWN', color: '#3b82f6' },
-        ]
-      },
-      {
-        time: 15,
-        arrows: [
-          { id: 1, x: 3, y: 2, dir: 'UP', color: '#f97316' },
-          { id: 2, x: 2, y: 3, dir: 'LEFT', color: '#8b5cf6' },
-          { id: 3, x: 3, y: 3, dir: 'RIGHT', color: '#3b82f6' },
-          { id: 4, x: 4, y: 3, dir: 'RIGHT', color: '#10b981' },
-          { id: 5, x: 3, y: 4, dir: 'DOWN', color: '#eab308' },
-        ]
-      },
-      {
-        time: 20,
-        arrows: [
-          { id: 1, x: 3, y: 2, dir: 'UP', color: '#ec4899' },
-          { id: 2, x: 2, y: 3, dir: 'LEFT', color: '#10b981' },
-          { id: 3, x: 3, y: 3, dir: 'UP', color: '#3b82f6' },
-          { id: 4, x: 4, y: 3, dir: 'RIGHT', color: '#f97316' },
-          { id: 5, x: 3, y: 4, dir: 'LEFT', color: '#eab308' },
-          { id: 6, x: 4, y: 4, dir: 'DOWN', color: '#06b6d4' },
-          { id: 7, x: 3, y: 5, dir: 'DOWN', color: '#8b5cf6' },
-        ]
-      }
-    ];
-
-    let currentLevel = 0;
+    let currentLevel = 1;
     let arrows = [];
     let timeLeft = 0;
     let maxTime = 0;
@@ -197,13 +96,60 @@
     let isGameOver = false;
     let hasWon = false;
 
-    function getRotation(dir) {
-      switch (dir) {
-        case 'UP': return 0;
-        case 'RIGHT': return 90;
-        case 'DOWN': return 180;
-        case 'LEFT': return 270;
+    // GENERATOR LEVEL OTOMATIS
+    function generateLevel(levelIdx) {
+      // Makin tinggi level, makin banyak jumlah panah (maksimal 45 dari total 49 petak)
+      let numArrows = Math.min(3 + Math.floor(levelIdx * 1.5), 45);
+      let timeLimit = Math.max(10, Math.floor(numArrows * 1.5)); 
+      
+      let newArrows = [];
+      
+      for (let i = 0; i < numArrows; i++) {
+        let emptyCells = [];
+        for (let x = 0; x < GRID_COLS; x++) {
+          for (let y = 0; y < GRID_ROWS; y++) {
+            if (!newArrows.some(a => a.x === x && a.y === y)) {
+              emptyCells.push({x, y});
+            }
+          }
+        }
+        
+        // Acak petak kosong
+        emptyCells.sort(() => Math.random() - 0.5);
+        
+        let placed = false;
+        for (let cell of emptyCells) {
+          let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+          dirs.sort(() => Math.random() - 0.5); // Acak arah panah
+          
+          for (let dir of dirs) {
+            // Cek apakah jalur ini nabrak panah yg SUDAH ada
+            let hit = newArrows.some(other => {
+              if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
+              if (dir === 'DOWN') return other.x === cell.x && other.y > cell.y;
+              if (dir === 'LEFT') return other.y === cell.y && other.x < cell.x;
+              if (dir === 'RIGHT') return other.y === cell.y && other.x > cell.x;
+              return false;
+            });
+            
+            // Jika jalurnya kosong, taruh panah di sini (Dijamin pasti bisa dikeluarkan pemain)
+            if (!hit) {
+              newArrows.push({
+                id: i + 1, x: cell.x, y: cell.y, dir: dir,
+                color: COLORS[Math.floor(Math.random() * COLORS.length)]
+              });
+              placed = true;
+              break;
+            }
+          }
+          if (placed) break;
+        }
       }
+      return { time: timeLimit, arrows: newArrows };
+    }
+
+    function getRotation(dir) {
+      switch (dir) { case 'UP': return 0; case 'RIGHT': return 90; case 'DOWN': return 180; case 'LEFT': return 270; }
     }
 
     function initLevel(lvlIdx) {
@@ -213,11 +159,12 @@
       isGameOver = false;
       hasWon = false;
 
-      const lvl = levels[lvlIdx];
-      levelLabel.innerText = `Level ${lvlIdx + 1}`;
-      maxTime = lvl.time;
-      timeLeft = lvl.time;
-      arrows = JSON.parse(JSON.stringify(lvl.arrows));
+      levelLabel.innerText = `Level ${lvlIdx}`;
+      const lvlData = generateLevel(lvlIdx); // Panggil Generator!
+      
+      maxTime = lvlData.time;
+      timeLeft = lvlData.time;
+      arrows = lvlData.arrows;
 
       arrows.forEach(arr => {
         const el = document.createElement('div');
@@ -227,13 +174,10 @@
         el.style.top = `${arr.y * CELL_SIZE}px`;
         
         const deg = getRotation(arr.dir);
-        // Path SVG dibuat panjang dan lurus seperti stik dengan ujung panah
         el.innerHTML = `
           <svg viewBox="0 0 100 100" style="transform: rotate(${deg}deg);">
             <path fill="${arr.color}" d="M50 5 L90 45 L65 45 L65 95 L35 95 L35 45 L10 45 Z"/>
-          </svg>
-        `;
-
+          </svg>`;
         el.addEventListener('click', () => tryMoveArrow(arr.id));
         board.appendChild(el);
       });
@@ -245,10 +189,7 @@
       updateTimerUI();
       timerInterval = setInterval(() => {
         timeLeft -= 0.1;
-        if (timeLeft <= 0) {
-          timeLeft = 0;
-          endGame(false);
-        }
+        if (timeLeft <= 0) { timeLeft = 0; endGame(false); }
         updateTimerUI();
       }, 100);
     }
@@ -257,11 +198,7 @@
       timerLabel.innerText = `${Math.ceil(timeLeft)}s`;
       const pct = (timeLeft / maxTime) * 100;
       timerFill.style.width = `${pct}%`;
-      if (pct < 30) {
-        timerFill.style.background = '#ef4444';
-      } else {
-        timerFill.style.background = '#f59e0b';
-      }
+      timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
     }
 
     function tryMoveArrow(id) {
@@ -291,9 +228,9 @@
       let destY = target.y * CELL_SIZE;
 
       if (target.dir === 'UP') destY = -100;
-      if (target.dir === 'DOWN') destY = 500;
+      if (target.dir === 'DOWN') destY = 450;
       if (target.dir === 'LEFT') destX = -100;
-      if (target.dir === 'RIGHT') destX = 400;
+      if (target.dir === 'RIGHT') destX = 450;
 
       el.style.transform = `translate(${destX - target.x * CELL_SIZE}px, ${destY - target.y * CELL_SIZE}px)`;
       el.style.opacity = '0';
@@ -302,34 +239,20 @@
 
       setTimeout(() => {
         el.remove();
-        if (arrows.length === 0 && !isGameOver) {
-          endGame(true);
-        }
+        if (arrows.length === 0 && !isGameOver) { endGame(true); }
       }, 250);
     }
 
     function endGame(won) {
-      isGameOver = true;
-      hasWon = won;
+      isGameOver = true; hasWon = won;
       clearInterval(timerInterval);
       overlay.style.display = 'flex';
-
-      if (won) {
-        overlayMsg.innerText = currentLevel === levels.length - 1 ? 'All Levels Cleared! 🎉' : 'Level Clear! 🎉';
-        actionBtn.innerText = currentLevel === levels.length - 1 ? 'Play Again' : 'Next Level';
-      } else {
-        overlayMsg.innerText = 'Time Out! ⏰';
-        actionBtn.innerText = 'Try Again';
-      }
+      overlayMsg.innerText = won ? 'Level Clear! 🎉' : 'Time Out! ⏰';
+      actionBtn.innerText = won ? 'Next Level' : 'Try Again';
     }
 
     function handleOverlayClick() {
-      if (hasWon) {
-        currentLevel++;
-        if (currentLevel >= levels.length) {
-          currentLevel = 0; 
-        }
-      }
+      if (hasWon) currentLevel++;
       initLevel(currentLevel);
     }
 
