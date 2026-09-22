@@ -8,23 +8,22 @@
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
     body {
       margin: 0; padding: 0;
-      background: #0f172a; /* Background gelap / Navy */
+      background: #0f172a; 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       min-height: 100vh; overflow: hidden;
     }
 
-    /* 👇 WATERMARK LUAR (Serong ala Shutterstock pakai gambar bg-logo.png) 👇 */
     .watermark-bg {
       position: fixed;
       top: -50%;
       left: -50%;
       width: 200%;
       height: 200%;
-      background-image: url('bg-logo.png'); /* Ganti nama file gambar kedua kamu jadi ini */
+      background-image: url('bg-logo.png'); 
       background-repeat: repeat; 
-      background-size: 500px; /* Ukuran gambar background, bisa disesuaikan */
+      background-size: 500px; 
       transform: rotate(-25deg); 
       opacity: 0.05; 
       pointer-events: none; 
@@ -55,7 +54,6 @@
       overflow: hidden;
     }
 
-    /* 👇 WATERMARK DALAM (Tengah board pakai gambar logo.png) 👇 */
     #board::before {
       content: "";
       position: absolute;
@@ -64,7 +62,7 @@
       transform: translate(-50%, -50%);
       width: 350px; 
       height: 350px;
-      background-image: url('logo.png'); /* Gambar pertama kamu */
+      background-image: url('logo.png'); 
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
@@ -209,19 +207,31 @@
       let newArrows = [];
       
       for (let i = 0; i < numArrows; i++) {
-        let emptyCells = [];
-        for (let x = 0; x < GRID_COLS; x++) {
-          for (let y = 0; y < GRID_ROWS; y++) {
-            if (!newArrows.some(a => a.x === x && a.y === y)) {
-              emptyCells.push({x, y});
+        let candidateCells = [];
+        
+        // Algoritma Clumping: Panah pertama selalu di tengah, yang lain menempel
+        if (newArrows.length === 0) {
+          candidateCells.push({x: Math.floor(GRID_COLS/2), y: Math.floor(GRID_ROWS/2)});
+        } else {
+          // Cari sel kosong yang "bersebelahan" dengan panah yang sudah ditaruh
+          for (let x = 0; x < GRID_COLS; x++) {
+            for (let y = 0; y < GRID_ROWS; y++) {
+              if (!newArrows.some(a => a.x === x && a.y === y)) {
+                let isAdjacent = newArrows.some(a => 
+                  (Math.abs(a.x - x) === 1 && a.y === y) || 
+                  (Math.abs(a.y - y) === 1 && a.x === x)
+                );
+                if (isAdjacent) candidateCells.push({x, y});
+              }
             }
           }
         }
         
-        emptyCells.sort(() => Math.random() - 0.5);
+        candidateCells.sort(() => Math.random() - 0.5);
         
         let placed = false;
-        for (let cell of emptyCells) {
+        // Prioritaskan menaruh panah secara berdekatan (clumping)
+        for (let cell of candidateCells) {
           let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
           dirs.sort(() => Math.random() - 0.5); 
           
@@ -244,6 +254,36 @@
             }
           }
           if (placed) break;
+        }
+
+        // Fallback jika area yang berdekatan jalurnya tabrakan semua (ambil acak)
+        if (!placed) {
+          let fallbackCells = [];
+          for (let x = 0; x < GRID_COLS; x++) {
+            for (let y = 0; y < GRID_ROWS; y++) {
+              if (!newArrows.some(a => a.x === x && a.y === y)) fallbackCells.push({x, y});
+            }
+          }
+          fallbackCells.sort(() => Math.random() - 0.5);
+          for (let cell of fallbackCells) {
+            let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+            dirs.sort(() => Math.random() - 0.5);
+            for (let dir of dirs) {
+              let hit = newArrows.some(other => {
+                if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
+                if (dir === 'DOWN') return other.x === cell.x && other.y > cell.y;
+                if (dir === 'LEFT') return other.y === cell.y && other.x < cell.x;
+                if (dir === 'RIGHT') return other.y === cell.y && other.x > cell.x;
+                return false;
+              });
+              if (!hit) {
+                newArrows.push({ id: i + 1, x: cell.x, y: cell.y, dir: dir, color: COLORS[Math.floor(Math.random() * COLORS.length)] });
+                placed = true;
+                break;
+              }
+            }
+            if (placed) break;
+          }
         }
       }
       return { time: timeLimit, arrows: newArrows };
