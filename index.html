@@ -202,18 +202,19 @@
 
     function generateLevel(levelIdx) {
       let numArrows = Math.min(3 + Math.floor(levelIdx * 1.5), 45);
-      let timeLimit = Math.max(10, Math.floor(numArrows * 1.5)); 
+      
+      // 👇 INI YANG BIKIN SUSAH: Waktu dipersingkat drastis! 👇
+      // Minimal 6 detik, dan cuma dapet +0.85 detik per panah
+      let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
       
       let newArrows = [];
       
       for (let i = 0; i < numArrows; i++) {
         let candidateCells = [];
         
-        // Algoritma Clumping: Panah pertama selalu di tengah, yang lain menempel
         if (newArrows.length === 0) {
           candidateCells.push({x: Math.floor(GRID_COLS/2), y: Math.floor(GRID_ROWS/2)});
         } else {
-          // Cari sel kosong yang "bersebelahan" dengan panah yang sudah ditaruh
           for (let x = 0; x < GRID_COLS; x++) {
             for (let y = 0; y < GRID_ROWS; y++) {
               if (!newArrows.some(a => a.x === x && a.y === y)) {
@@ -230,7 +231,6 @@
         candidateCells.sort(() => Math.random() - 0.5);
         
         let placed = false;
-        // Prioritaskan menaruh panah secara berdekatan (clumping)
         for (let cell of candidateCells) {
           let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
           dirs.sort(() => Math.random() - 0.5); 
@@ -256,7 +256,6 @@
           if (placed) break;
         }
 
-        // Fallback jika area yang berdekatan jalurnya tabrakan semua (ambil acak)
         if (!placed) {
           let fallbackCells = [];
           for (let x = 0; x < GRID_COLS; x++) {
@@ -343,7 +342,8 @@
     }
 
     function updateTimerUI() {
-      timerLabel.innerText = `${Math.ceil(timeLeft)}s`;
+      // Ditambahin toFixed(1) biar desimal waktunya kelihatan deg-degan
+      timerLabel.innerText = `${Math.max(0, timeLeft).toFixed(1)}s`; 
       const pct = (timeLeft / maxTime) * 100;
       timerFill.style.width = `${pct}%`;
       timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
