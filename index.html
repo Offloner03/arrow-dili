@@ -64,7 +64,7 @@
     }
     #board {
       width: 350px;
-      height: 450px;
+      height: 400px;
       position: relative;
       background: #ffffff;
       border-radius: 16px;
@@ -73,35 +73,34 @@
     }
     .arrow {
       position: absolute;
-      width: 44px;
-      height: 44px;
+      width: 50px; /* Ukuran petak penuh agar berdempetan */
+      height: 50px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: transform 0.25s ease-out, opacity 0.25s ease-out;
     }
+    /* Mengubah bentuk SVG menjadi lebih panjang (stick) seperti di referensi */
     .arrow svg {
-      width: 100%;
-      height: 100%;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+      width: 90%;
+      height: 90%;
+      filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));
     }
-    /* Animasi getar ketika terhalang */
     .blocked {
       animation: shake 0.3s ease-in-out;
     }
     @keyframes shake {
       0%, 100% { transform: translate(0, 0); }
-      20% { transform: translate(-3px, -3px); }
-      40% { transform: translate(3px, 3px); }
-      60% { transform: translate(-3px, 3px); }
-      80% { transform: translate(3px, -2px); }
+      20% { transform: translate(-4px, -4px); }
+      40% { transform: translate(4px, 4px); }
+      60% { transform: translate(-4px, 4px); }
+      80% { transform: translate(4px, -2px); }
     }
-    /* Modal Win / Game Over */
     #overlay {
       position: absolute;
       inset: 0;
-      background: rgba(15, 23, 42, 0.7);
+      background: rgba(15, 23, 42, 0.85);
       display: none;
       flex-direction: column;
       align-items: center;
@@ -114,7 +113,7 @@
       margin: 0 0 10px 0;
       font-size: 28px;
     }
-    #restart-btn {
+    #action-btn {
       padding: 10px 24px;
       background: #3b82f6;
       border: none;
@@ -123,6 +122,7 @@
       border-radius: 8px;
       cursor: pointer;
       font-size: 16px;
+      margin-top: 10px;
     }
   </style>
 </head>
@@ -130,7 +130,7 @@
 
   <div id="game-container">
     <div class="header">
-      <div class="level-text" id="level-label">01</div>
+      <div class="level-text" id="level-label">Level 1</div>
       <div class="timer-bar">
         <div class="timer-fill" id="timer-fill"></div>
       </div>
@@ -140,41 +140,51 @@
     <div id="board">
       <div id="overlay">
         <h2 id="overlay-msg">Level Clear!</h2>
-        <button id="restart-btn" onclick="nextOrRestart()">Next Level</button>
+        <button id="action-btn" onclick="handleOverlayClick()">Next Level</button>
       </div>
     </div>
   </div>
 
   <script>
-    const CELL_SIZE = 50; // px per grid cell
-    const GRID_COLS = 7;
-    const GRID_ROWS = 9;
-
+    const CELL_SIZE = 50; 
+    
     const board = document.getElementById('board');
     const timerFill = document.getElementById('timer-fill');
     const timerLabel = document.getElementById('timer-label');
     const overlay = document.getElementById('overlay');
     const overlayMsg = document.getElementById('overlay-msg');
-    const restartBtn = document.getElementById('restart-btn');
+    const actionBtn = document.getElementById('action-btn');
     const levelLabel = document.getElementById('level-label');
 
-    const COLORS = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-
-    // Level design: posisi (x,y), arah, dan warna panah
+    // Desain level berdempetan (koordinat x,y saling bersebelahan)
     const levels = [
+      {
+        time: 10,
+        arrows: [
+          { id: 1, x: 3, y: 3, dir: 'UP', color: '#f97316' },
+          { id: 2, x: 3, y: 4, dir: 'DOWN', color: '#3b82f6' },
+        ]
+      },
       {
         time: 15,
         arrows: [
-          { id: 1, x: 3, y: 1, dir: 'UP', color: '#f97316' },
-          { id: 2, x: 2, y: 3, dir: 'UP', color: '#8b5cf6' },
-          { id: 3, x: 4, y: 3, dir: 'RIGHT', color: '#3b82f6' },
-          { id: 4, x: 2, y: 4, dir: 'LEFT', color: '#10b981' },
-          { id: 5, x: 4, y: 4, dir: 'RIGHT', color: '#eab308' },
-          { id: 6, x: 2, y: 5, dir: 'UP', color: '#8b5cf6' },
-          { id: 7, x: 3, y: 5, dir: 'DOWN', color: '#f97316' },
-          { id: 8, x: 4, y: 5, dir: 'DOWN', color: '#06b6d4' },
-          { id: 9, x: 5, y: 5, dir: 'RIGHT', color: '#ec4899' },
-          { id: 10, x: 5, y: 6, dir: 'RIGHT', color: '#10b981' },
+          { id: 1, x: 3, y: 2, dir: 'UP', color: '#f97316' },
+          { id: 2, x: 2, y: 3, dir: 'LEFT', color: '#8b5cf6' },
+          { id: 3, x: 3, y: 3, dir: 'RIGHT', color: '#3b82f6' },
+          { id: 4, x: 4, y: 3, dir: 'RIGHT', color: '#10b981' },
+          { id: 5, x: 3, y: 4, dir: 'DOWN', color: '#eab308' },
+        ]
+      },
+      {
+        time: 20,
+        arrows: [
+          { id: 1, x: 3, y: 2, dir: 'UP', color: '#ec4899' },
+          { id: 2, x: 2, y: 3, dir: 'LEFT', color: '#10b981' },
+          { id: 3, x: 3, y: 3, dir: 'UP', color: '#3b82f6' },
+          { id: 4, x: 4, y: 3, dir: 'RIGHT', color: '#f97316' },
+          { id: 5, x: 3, y: 4, dir: 'LEFT', color: '#eab308' },
+          { id: 6, x: 4, y: 4, dir: 'DOWN', color: '#06b6d4' },
+          { id: 7, x: 3, y: 5, dir: 'DOWN', color: '#8b5cf6' },
         ]
       }
     ];
@@ -185,6 +195,7 @@
     let maxTime = 0;
     let timerInterval = null;
     let isGameOver = false;
+    let hasWon = false;
 
     function getRotation(dir) {
       switch (dir) {
@@ -200,9 +211,10 @@
       board.querySelectorAll('.arrow').forEach(el => el.remove());
       overlay.style.display = 'none';
       isGameOver = false;
+      hasWon = false;
 
       const lvl = levels[lvlIdx];
-      levelLabel.innerText = String(lvlIdx + 1).padStart(2, '0');
+      levelLabel.innerText = `Level ${lvlIdx + 1}`;
       maxTime = lvl.time;
       timeLeft = lvl.time;
       arrows = JSON.parse(JSON.stringify(lvl.arrows));
@@ -215,9 +227,10 @@
         el.style.top = `${arr.y * CELL_SIZE}px`;
         
         const deg = getRotation(arr.dir);
+        // Path SVG dibuat panjang dan lurus seperti stik dengan ujung panah
         el.innerHTML = `
-          <svg viewBox="0 0 24 24" style="transform: rotate(${deg}deg);">
-            <path fill="${arr.color}" d="M12 2L4 10h5v12h6V10h5L12 2z"/>
+          <svg viewBox="0 0 100 100" style="transform: rotate(${deg}deg);">
+            <path fill="${arr.color}" d="M50 5 L90 45 L65 45 L65 95 L35 95 L35 45 L10 45 Z"/>
           </svg>
         `;
 
@@ -258,7 +271,6 @@
 
       const el = document.getElementById(`arrow-${id}`);
       
-      // Cek apakah ada panah lain di depan jalurnya
       const blocked = arrows.some(other => {
         if (other.id === target.id) return false;
         if (target.dir === 'UP') return other.x === target.x && other.y < target.y;
@@ -269,31 +281,28 @@
       });
 
       if (blocked) {
-        // Efek mental / getar jika tertabrak
         el.classList.remove('blocked');
-        void el.offsetWidth; // re-trigger animation
+        void el.offsetWidth; 
         el.classList.add('blocked');
         return;
       }
 
-      // Animasi meluncur keluar board
       let destX = target.x * CELL_SIZE;
       let destY = target.y * CELL_SIZE;
 
-      if (target.dir === 'UP') destY = -60;
+      if (target.dir === 'UP') destY = -100;
       if (target.dir === 'DOWN') destY = 500;
-      if (target.dir === 'LEFT') destX = -60;
+      if (target.dir === 'LEFT') destX = -100;
       if (target.dir === 'RIGHT') destX = 400;
 
       el.style.transform = `translate(${destX - target.x * CELL_SIZE}px, ${destY - target.y * CELL_SIZE}px)`;
       el.style.opacity = '0';
 
-      // Hapus dari data aktif
       arrows = arrows.filter(a => a.id !== id);
 
       setTimeout(() => {
         el.remove();
-        if (arrows.length === 0) {
+        if (arrows.length === 0 && !isGameOver) {
           endGame(true);
         }
       }, 250);
@@ -301,24 +310,30 @@
 
     function endGame(won) {
       isGameOver = true;
+      hasWon = won;
       clearInterval(timerInterval);
       overlay.style.display = 'flex';
 
       if (won) {
-        overlayMsg.innerText = 'Puzzle Cleared! 🎉';
-        restartBtn.innerText = 'Play Again';
+        overlayMsg.innerText = currentLevel === levels.length - 1 ? 'All Levels Cleared! 🎉' : 'Level Clear! 🎉';
+        actionBtn.innerText = currentLevel === levels.length - 1 ? 'Play Again' : 'Next Level';
       } else {
         overlayMsg.innerText = 'Time Out! ⏰';
-        restartBtn.innerText = 'Try Again';
+        actionBtn.innerText = 'Try Again';
       }
     }
 
-    function nextOrRestart() {
+    function handleOverlayClick() {
+      if (hasWon) {
+        currentLevel++;
+        if (currentLevel >= levels.length) {
+          currentLevel = 0; 
+        }
+      }
       initLevel(currentLevel);
     }
 
-    // Jalankan level awal
-    initLevel(0);
+    initLevel(currentLevel);
   </script>
 </body>
 </html>
