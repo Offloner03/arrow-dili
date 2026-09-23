@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dlicom Arrow Jam</title>
+  <title>Dlicom Arrow Jam 🎯</title>
   <link rel="icon" type="image/png" href="logo.png" />
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
@@ -90,7 +90,7 @@
     #start-screen h1 { font-size: 32px; margin: 0 0 10px 0; }
     #start-screen p { color: #94a3b8; margin-bottom: 30px; font-weight: 600; }
 
-    /* Modals untuk Info & Input Nama */
+    /* Modals for Info & Input Name */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,0.7);
       display: none; align-items: center; justify-content: center; z-index: 200;
@@ -135,7 +135,7 @@
   <div id="start-screen">
     <img src="bg-logo.png" alt="Dlicom Logo">
     <h1>Arrow Jam</h1>
-    <p>Selesaikan puzzle sebelum waktu habis!</p>
+    <p>Clear the arrows before time runs out!</p>
     <div class="btn-group">
       <button class="btn-primary" onclick="showNameModal()" style="font-size: 20px; padding: 12px 30px;">PLAY</button>
       <button class="btn-secondary" onclick="showInfoModal()" style="font-size: 20px; padding: 12px 30px;">INFO</button>
@@ -144,29 +144,29 @@
 
   <div id="info-modal" class="modal-overlay">
     <div class="modal-content">
-      <h2>Cara Bermain 🎯</h2>
-      <p>1. <strong>Klik panah</strong> untuk mengeluarkannya dari papan.</p>
-      <p>2. Panah hanya bisa meluncur jika <strong>jalur di depannya kosong</strong> (tidak terhalang panah lain).</p>
-      <p>3. <strong>HATI-HATI:</strong> Jika salah klik dan panah menabrak, kamu kena penalti <strong>-1 detik!</strong></p>
-      <p>4. Bersihkan semua panah secepat mungkin. Semakin tinggi level, panah akan semakin rumit dan saling mengunci.</p>
-      <button class="btn-primary" onclick="closeInfoModal()" style="width: 100%; margin-top: 10px;">Tutup</button>
+      <h2>How to Play 🎯</h2>
+      <p>1. <strong>Click an arrow</strong> to remove it from the board.</p>
+      <p>2. Arrows can only move if their <strong>path is clear</strong> (not blocked by other arrows).</p>
+      <p>3. <strong>CAREFUL:</strong> If an arrow hits another, you get a <strong>-1 second</strong> penalty!</p>
+      <p>4. Clear all arrows as fast as possible. Higher levels have more complex, interlocking arrows.</p>
+      <button class="btn-primary" onclick="closeInfoModal()" style="width: 100%; margin-top: 10px;">Close</button>
     </div>
   </div>
 
   <div id="name-modal" class="modal-overlay">
     <div class="modal-content">
-      <h2>Masukkan Nama 🎮</h2>
-      <input type="text" id="player-name" placeholder="Nama Pemain" maxlength="15" autocomplete="off" />
+      <h2>Enter Your Name 🎮</h2>
+      <input type="text" id="player-name" placeholder="Player Name" maxlength="15" autocomplete="off" />
       <div class="btn-group" style="justify-content: center;">
-        <button class="btn-secondary" onclick="closeNameModal()">Batal</button>
-        <button class="btn-primary" onclick="confirmNameAndStart()">Mulai</button>
+        <button class="btn-secondary" onclick="closeNameModal()">Cancel</button>
+        <button class="btn-primary" onclick="confirmNameAndStart()">Start</button>
       </div>
     </div>
   </div>
 
   <div id="game-container">
     <div class="info-bar">
-      <div>👤 <span id="display-player-name" style="color: #3b82f6;">Pemain</span> | Best: <span id="best-level-label" style="color: #f59e0b;">1</span></div>
+      <div>👤 <span id="display-player-name" style="color: #3b82f6;">Player</span> | Best: <span id="best-level-label" style="color: #f59e0b;">1</span></div>
       <div id="mute-btn" onclick="toggleMute()">🔊</div>
     </div>
 
@@ -181,7 +181,7 @@
       <div id="overlay">
         <h2 id="overlay-msg">Level Clear! 🎉</h2>
         <div class="btn-group">
-          <button id="menu-btn" class="btn-secondary" onclick="goMainMenu()" style="display: none;">Menu Utama</button>
+          <button id="menu-btn" class="btn-secondary" onclick="goMainMenu()" style="display: none;">Main Menu</button>
           <button id="action-btn" class="btn-primary" onclick="handleOverlayClick()">Next Level</button>
         </div>
       </div>
@@ -227,7 +227,7 @@
       if (isMuted) {
         bgmAudio.pause();
       } else {
-        bgmAudio.play().catch(e => console.log("BGM gagal dimainkan"));
+        bgmAudio.play().catch(e => console.log("BGM failed to play"));
       }
     }
 
@@ -286,7 +286,7 @@
     }
     function closeNameModal() { document.getElementById('name-modal').style.display = 'none'; }
 
-    // Mulai Game setelah input nama
+    // Start game after inputting name
     function confirmNameAndStart() {
       let nameInput = document.getElementById('player-name').value.trim();
       if (!nameInput) nameInput = "Player";
@@ -301,24 +301,24 @@
       if (audioCtx.state === 'suspended') audioCtx.resume();
       if (!isMuted) {
         bgmAudio.volume = 0.3; 
-        bgmAudio.play().catch(e => console.log("BGM butuh interaksi user"));
+        bgmAudio.play().catch(e => console.log("BGM requires user interaction"));
       }
       
-      currentLevel = 1; // Reset ke level 1 tiap mulai dari menu awal
+      currentLevel = 1; 
       initLevel(currentLevel);
     }
 
-    // Fungsi kembali ke Menu Utama
+    // Go back to Main Menu
     function goMainMenu() {
       isGameOver = true;
       clearInterval(timerInterval);
-      bgmAudio.pause(); // Matikan BGM sementara
+      bgmAudio.pause(); 
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('game-container').style.display = 'none';
       document.getElementById('start-screen').style.display = 'flex';
     }
 
-    // ALGORITMA: Clumping (Tengah) + Saling Mengunci (Interlocking)
+    // ALGORITHM: Clumping (Center) + Interlocking
     function generateLevel(levelIdx) {
       let numArrows = Math.min(3 + Math.floor(levelIdx * 2), 49); 
       let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
@@ -472,7 +472,7 @@
       timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
     }
 
-    // Kesan Letupan Zarah (Particles)
+    // Particle Explosion Effect
     function createParticles(x, y, color) {
       for (let i = 0; i < 6; i++) {
         const p = document.createElement('div');
@@ -581,9 +581,9 @@
       if (won) {
         overlayMsg.innerText = 'Level Clear! 🎉';
         actionBtn.innerText = 'Next Level';
-        menuBtn.style.display = 'none'; // Sembunyikan tombol Menu Utama kalau menang
+        menuBtn.style.display = 'none'; // Hide Main Menu button if won
         
-        // Simpan markah tertinggi (High Score)
+        // Save High Score
         if (currentLevel >= bestLevel) {
           bestLevel = currentLevel + 1;
           localStorage.setItem('dlicom_best_level', bestLevel);
@@ -592,7 +592,7 @@
       } else {
         overlayMsg.innerText = 'Game Over! ⏰';
         actionBtn.innerText = 'Try Again';
-        menuBtn.style.display = 'inline-block'; // Munculkan tombol Menu Utama cuma pas Game Over
+        menuBtn.style.display = 'inline-block'; // Show Main Menu button only on Game Over
         playGameOverSound();
       }
     }
