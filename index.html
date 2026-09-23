@@ -188,7 +188,7 @@
     </div>
   </div>
 
-  <script>
+ <script>
     const CELL_SIZE = 50; 
     const GRID_COLS = 7;
     const GRID_ROWS = 7;
@@ -206,7 +206,7 @@
     const bgmAudio = document.getElementById('bgm');
 
     let currentLevel = 1;
-    let bestLevel = localStorage.getItem('dlicom_best_level') || 1;
+    let bestLevel = 1; 
     let arrows = [];
     let timeLeft = 0;
     let maxTime = 0;
@@ -215,9 +215,6 @@
     let hasWon = false;
     let isMuted = false;
 
-    bestLevelLabel.innerText = bestLevel;
-
-    // AUDIO CONTEXT
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
@@ -274,25 +271,30 @@
       osc.start(); osc.stop(audioCtx.currentTime + 0.8);
     }
 
-    // Modal Info Logic
     function showInfoModal() { document.getElementById('info-modal').style.display = 'flex'; }
     function closeInfoModal() { document.getElementById('info-modal').style.display = 'none'; }
 
-    // Modal Name Logic
     function showNameModal() {
-      const savedName = localStorage.getItem('dlicom_player_name') || "";
-      document.getElementById('player-name').value = savedName;
+      const savedName = localStorage.getItem('dlicom_last_player') || "";
+      const nameInputEl = document.getElementById('player-name');
+      nameInputEl.value = savedName;
       document.getElementById('name-modal').style.display = 'flex';
+      setTimeout(() => { nameInputEl.select(); }, 100); 
     }
+    
     function closeNameModal() { document.getElementById('name-modal').style.display = 'none'; }
 
-    // Start game after inputting name
     function confirmNameAndStart() {
       let nameInput = document.getElementById('player-name').value.trim();
       if (!nameInput) nameInput = "Player";
       
-      localStorage.setItem('dlicom_player_name', nameInput);
+      localStorage.setItem('dlicom_last_player', nameInput);
       document.getElementById('display-player-name').innerText = nameInput;
+      
+      // Mengubah nama menjadi huruf kecil semua sebagai ID penyimpanan (*Database Key*)
+      let playerKey = nameInput.toLowerCase();
+      bestLevel = parseInt(localStorage.getItem('dlicom_best_level_' + playerKey)) || 1;
+      bestLevelLabel.innerText = bestLevel;
       
       document.getElementById('name-modal').style.display = 'none';
       document.getElementById('start-screen').style.display = 'none';
@@ -308,7 +310,6 @@
       initLevel(currentLevel);
     }
 
-    // Go back to Main Menu
     function goMainMenu() {
       isGameOver = true;
       clearInterval(timerInterval);
@@ -318,7 +319,6 @@
       document.getElementById('start-screen').style.display = 'flex';
     }
 
-    // ALGORITHM: Clumping (Center) + Interlocking
     function generateLevel(levelIdx) {
       let numArrows = Math.min(3 + Math.floor(levelIdx * 2), 49); 
       let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
@@ -472,7 +472,6 @@
       timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
     }
 
-    // Particle Explosion Effect
     function createParticles(x, y, color) {
       for (let i = 0; i < 6; i++) {
         const p = document.createElement('div');
@@ -581,18 +580,21 @@
       if (won) {
         overlayMsg.innerText = 'Level Clear! 🎉';
         actionBtn.innerText = 'Next Level';
-        menuBtn.style.display = 'none'; // Hide Main Menu button if won
+        menuBtn.style.display = 'none'; 
         
-        // Save High Score
         if (currentLevel >= bestLevel) {
           bestLevel = currentLevel + 1;
-          localStorage.setItem('dlicom_best_level', bestLevel);
+          let currentPlayer = localStorage.getItem('dlicom_last_player') || "Player";
+          
+          // Mengubah nama menjadi huruf kecil semua saat menyimpan rekor baru
+          let playerKey = currentPlayer.toLowerCase();
+          localStorage.setItem('dlicom_best_level_' + playerKey, bestLevel);
           bestLevelLabel.innerText = bestLevel;
         }
       } else {
         overlayMsg.innerText = 'Game Over! ⏰';
         actionBtn.innerText = 'Try Again';
-        menuBtn.style.display = 'inline-block'; // Show Main Menu button only on Game Over
+        menuBtn.style.display = 'inline-block'; 
         playGameOverSound();
       }
     }
