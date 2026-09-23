@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dlicom Arrow Jam 🎯</title>
+  <title>Dlicom Arrow Jam</title>
   <link rel="icon" type="image/png" href="logo.png" />
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
@@ -23,12 +23,11 @@
       opacity: 0.05; pointer-events: none; z-index: -1; 
     }
 
-    /* Asalnya disembunyikan sehingga butang Mula ditekan */
     #game-container { width: 360px; display: none; flex-direction: column; align-items: center; position: relative; z-index: 5; }
     
     .info-bar {
       width: 100%; display: flex; justify-content: space-between; align-items: center;
-      padding: 0 10px; margin-bottom: 10px; color: #94a3b8; font-weight: 700;
+      padding: 0 10px; margin-bottom: 10px; color: #94a3b8; font-weight: 700; font-size: 14px;
     }
     #mute-btn { cursor: pointer; font-size: 22px; transition: transform 0.2s; }
     #mute-btn:active { transform: scale(0.8); }
@@ -70,12 +69,17 @@
     }
     #overlay h2 { margin: 0 0 10px 0; font-size: 28px; text-align: center; }
     
-    .btn-primary {
-      padding: 10px 24px; background: #3b82f6; border: none; color: white;
-      font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px;
+    .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+    
+    .btn-primary, .btn-secondary {
+      padding: 10px 24px; border: none; color: white;
+      font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 16px;
       transition: background 0.2s;
     }
+    .btn-primary { background: #3b82f6; }
     .btn-primary:hover { background: #2563eb; }
+    .btn-secondary { background: #64748b; }
+    .btn-secondary:hover { background: #475569; }
 
     #start-screen {
       position: fixed; inset: 0; background: #0f172a;
@@ -85,6 +89,25 @@
     #start-screen img { width: 250px; margin-bottom: 20px; opacity: 0.9; }
     #start-screen h1 { font-size: 32px; margin: 0 0 10px 0; }
     #start-screen p { color: #94a3b8; margin-bottom: 30px; font-weight: 600; }
+
+    /* Modals untuk Info & Input Nama */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      display: none; align-items: center; justify-content: center; z-index: 200;
+    }
+    .modal-content {
+      background: #1e293b; padding: 25px; border-radius: 12px;
+      color: white; width: 90%; max-width: 320px; text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+    .modal-content h2 { margin-top: 0; color: #3b82f6; }
+    .modal-content p { font-size: 15px; color: #cbd5e1; text-align: left; margin-bottom: 10px; line-height: 1.5; }
+    .modal-content input {
+      width: 100%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none;
+      font-size: 16px; text-align: center; font-weight: bold; background: #334155; color: white;
+      outline: none;
+    }
+    .modal-content input:focus { box-shadow: 0 0 0 2px #3b82f6; }
 
     .penalty-text {
       position: absolute; color: #ef4444; font-weight: bold; font-size: 24px;
@@ -112,13 +135,38 @@
   <div id="start-screen">
     <img src="bg-logo.png" alt="Dlicom Logo">
     <h1>Arrow Jam</h1>
-    <p>Clear the arrows before time runs out!</p>
-    <button class="btn-primary" onclick="startGame()" style="font-size: 20px; padding: 12px 30px;">PLAY NOW</button>
+    <p>Selesaikan puzzle sebelum waktu habis!</p>
+    <div class="btn-group">
+      <button class="btn-primary" onclick="showNameModal()" style="font-size: 20px; padding: 12px 30px;">PLAY</button>
+      <button class="btn-secondary" onclick="showInfoModal()" style="font-size: 20px; padding: 12px 30px;">INFO</button>
+    </div>
+  </div>
+
+  <div id="info-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Cara Bermain 🎯</h2>
+      <p>1. <strong>Klik panah</strong> untuk mengeluarkannya dari papan.</p>
+      <p>2. Panah hanya bisa meluncur jika <strong>jalur di depannya kosong</strong> (tidak terhalang panah lain).</p>
+      <p>3. <strong>HATI-HATI:</strong> Jika salah klik dan panah menabrak, kamu kena penalti <strong>-1 detik!</strong></p>
+      <p>4. Bersihkan semua panah secepat mungkin. Semakin tinggi level, panah akan semakin rumit dan saling mengunci.</p>
+      <button class="btn-primary" onclick="closeInfoModal()" style="width: 100%; margin-top: 10px;">Tutup</button>
+    </div>
+  </div>
+
+  <div id="name-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2>Masukkan Nama 🎮</h2>
+      <input type="text" id="player-name" placeholder="Nama Pemain" maxlength="15" autocomplete="off" />
+      <div class="btn-group" style="justify-content: center;">
+        <button class="btn-secondary" onclick="closeNameModal()">Batal</button>
+        <button class="btn-primary" onclick="confirmNameAndStart()">Mulai</button>
+      </div>
+    </div>
   </div>
 
   <div id="game-container">
     <div class="info-bar">
-      <div>Best Level: <span id="best-level-label" style="color: #f59e0b;">1</span></div>
+      <div>👤 <span id="display-player-name" style="color: #3b82f6;">Pemain</span> | Best: <span id="best-level-label" style="color: #f59e0b;">1</span></div>
       <div id="mute-btn" onclick="toggleMute()">🔊</div>
     </div>
 
@@ -132,7 +180,10 @@
     <div id="board">
       <div id="overlay">
         <h2 id="overlay-msg">Level Clear! 🎉</h2>
-        <button id="action-btn" class="btn-primary" onclick="handleOverlayClick()">Next Level</button>
+        <div class="btn-group">
+          <button id="menu-btn" class="btn-secondary" onclick="goMainMenu()" style="display: none;">Menu Utama</button>
+          <button id="action-btn" class="btn-primary" onclick="handleOverlayClick()">Next Level</button>
+        </div>
       </div>
     </div>
   </div>
@@ -149,6 +200,7 @@
     const overlay = document.getElementById('overlay');
     const overlayMsg = document.getElementById('overlay-msg');
     const actionBtn = document.getElementById('action-btn');
+    const menuBtn = document.getElementById('menu-btn');
     const levelLabel = document.getElementById('level-label');
     const bestLevelLabel = document.getElementById('best-level-label');
     const bgmAudio = document.getElementById('bgm');
@@ -163,9 +215,9 @@
     let hasWon = false;
     let isMuted = false;
 
-    // Set skor tertinggi
     bestLevelLabel.innerText = bestLevel;
 
+    // AUDIO CONTEXT
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
@@ -222,19 +274,51 @@
       osc.start(); osc.stop(audioCtx.currentTime + 0.8);
     }
 
-    function startGame() {
+    // Modal Info Logic
+    function showInfoModal() { document.getElementById('info-modal').style.display = 'flex'; }
+    function closeInfoModal() { document.getElementById('info-modal').style.display = 'none'; }
+
+    // Modal Name Logic
+    function showNameModal() {
+      const savedName = localStorage.getItem('dlicom_player_name') || "";
+      document.getElementById('player-name').value = savedName;
+      document.getElementById('name-modal').style.display = 'flex';
+    }
+    function closeNameModal() { document.getElementById('name-modal').style.display = 'none'; }
+
+    // Mulai Game setelah input nama
+    function confirmNameAndStart() {
+      let nameInput = document.getElementById('player-name').value.trim();
+      if (!nameInput) nameInput = "Player";
+      
+      localStorage.setItem('dlicom_player_name', nameInput);
+      document.getElementById('display-player-name').innerText = nameInput;
+      
+      document.getElementById('name-modal').style.display = 'none';
       document.getElementById('start-screen').style.display = 'none';
       document.getElementById('game-container').style.display = 'flex';
       
       if (audioCtx.state === 'suspended') audioCtx.resume();
       if (!isMuted) {
         bgmAudio.volume = 0.3; 
-        bgmAudio.play().catch(e => console.log("Perlu berinteraksi dengan halaman untuk memainkan audio"));
+        bgmAudio.play().catch(e => console.log("BGM butuh interaksi user"));
       }
+      
+      currentLevel = 1; // Reset ke level 1 tiap mulai dari menu awal
       initLevel(currentLevel);
     }
 
-    // ALGORITMA BARU: Clumping (Tengah) + Saling Mengunci (Interlocking)
+    // Fungsi kembali ke Menu Utama
+    function goMainMenu() {
+      isGameOver = true;
+      clearInterval(timerInterval);
+      bgmAudio.pause(); // Matikan BGM sementara
+      document.getElementById('overlay').style.display = 'none';
+      document.getElementById('game-container').style.display = 'none';
+      document.getElementById('start-screen').style.display = 'flex';
+    }
+
+    // ALGORITMA: Clumping (Tengah) + Saling Mengunci (Interlocking)
     function generateLevel(levelIdx) {
       let numArrows = Math.min(3 + Math.floor(levelIdx * 2), 49); 
       let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
@@ -360,7 +444,6 @@
             <path fill="${arr.color}" d="M50 5 L90 45 L65 45 L65 95 L35 95 L35 45 L10 45 Z"/>
           </svg>`;
         
-        // Hantar warna panah untuk kesan zarah (particles)
         el.addEventListener('click', (e) => tryMoveArrow(arr.id, e, arr.color));
         el.addEventListener('touchstart', (e) => {
           e.preventDefault(); 
@@ -468,7 +551,7 @@
       arrows = arrows.filter(a => a.id !== id);
 
       setTimeout(() => {
-        createParticles(target.x * CELL_SIZE, target.y * CELL_SIZE, color); // Hasilkan letupan zarah!
+        createParticles(target.x * CELL_SIZE, target.y * CELL_SIZE, color); 
         el.remove();
         if (arrows.length === 0 && !isGameOver) { 
           playLevelUpSound(); 
@@ -498,6 +581,7 @@
       if (won) {
         overlayMsg.innerText = 'Level Clear! 🎉';
         actionBtn.innerText = 'Next Level';
+        menuBtn.style.display = 'none'; // Sembunyikan tombol Menu Utama kalau menang
         
         // Simpan markah tertinggi (High Score)
         if (currentLevel >= bestLevel) {
@@ -508,6 +592,7 @@
       } else {
         overlayMsg.innerText = 'Game Over! ⏰';
         actionBtn.innerText = 'Try Again';
+        menuBtn.style.display = 'inline-block'; // Munculkan tombol Menu Utama cuma pas Game Over
         playGameOverSound();
       }
     }
