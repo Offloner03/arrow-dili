@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dlicom Arrow Jam</title>
+  <title>Dlicom Arrow Jam 🎯</title>
   <link rel="icon" type="image/png" href="logo.png" />
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
@@ -30,17 +30,13 @@
       padding: 0 10px; margin-bottom: 10px; color: #94a3b8; font-weight: 700; font-size: 14px;
     }
 
-    /* Styling Volume Container & Slider */
     .volume-container {
       display: flex; align-items: center; gap: 8px;
       background: rgba(30, 41, 59, 0.8); padding: 5px 12px; border-radius: 20px;
     }
     .vol-icon { cursor: pointer; font-size: 16px; transition: transform 0.2s; }
     .vol-icon:active { transform: scale(0.8); }
-    .vol-slider {
-      width: 70px; cursor: pointer; accent-color: #3b82f6; 
-      background: transparent; outline: none;
-    }
+    .vol-slider { width: 70px; cursor: pointer; accent-color: #3b82f6; background: transparent; outline: none; }
 
     .header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px; }
     .level-text { font-size: 24px; font-weight: 800; color: #ffffff; white-space: nowrap; }
@@ -49,7 +45,6 @@
     .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 45px; text-align: right; }
     
     #board { width: 350px; height: 350px; position: relative; background: transparent; border-radius: 16px; overflow: hidden; }
-
     #board::before {
       content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
       width: 350px; height: 350px; background-image: url('logo.png'); 
@@ -79,9 +74,9 @@
     }
     #overlay h2 { margin: 0 0 10px 0; font-size: 28px; text-align: center; }
     
-    .btn-group { display: flex; gap: 10px; margin-top: 10px; }
+    .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; justify-content: center;}
     
-    .btn-primary, .btn-secondary {
+    .btn-primary, .btn-secondary, .btn-gold {
       padding: 10px 24px; border: none; color: white;
       font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 16px;
       transition: background 0.2s;
@@ -90,28 +85,25 @@
     .btn-primary:hover { background: #2563eb; }
     .btn-secondary { background: #64748b; }
     .btn-secondary:hover { background: #475569; }
+    .btn-gold { background: #d97706; width: 100%; margin-top: 10px;}
+    .btn-gold:hover { background: #b45309; }
 
-    /* START SCREEN & MENU EFFECTS */
     #start-screen {
       position: fixed; inset: 0; background: #0f172a;
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 100; color: white; text-align: center; overflow: hidden;
     }
-    .menu-content {
-      position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center;
-    }
+    .menu-content { position: relative; z-index: 10; display: flex; flex-direction: column; align-items: center; }
     .menu-content img { width: 250px; margin-bottom: 20px; opacity: 0.9; }
     .menu-content h1 { font-size: 32px; margin: 0 0 10px 0; text-shadow: 0 4px 10px rgba(0,0,0,0.5); }
     .menu-content p { color: #94a3b8; margin-bottom: 30px; font-weight: 600; text-shadow: 0 2px 5px rgba(0,0,0,0.5); }
 
-    /* Cahaya Ngikutin Kursor */
     #mouse-glow {
       position: fixed; width: 250px; height: 250px; border-radius: 50%;
       background: radial-gradient(circle, rgba(59,130,246,0.4) 0%, rgba(0,0,0,0) 70%);
       pointer-events: none; transform: translate(-50%, -50%); z-index: 1;
     }
 
-    /* Balon Interaktif */
     .floating-bubble {
       position: absolute; border-radius: 50%; cursor: default; z-index: 2;
       box-shadow: inset 0 0 12px rgba(255,255,255,0.6), 0 0 15px rgba(0,0,0,0.3);
@@ -120,9 +112,8 @@
     .floating-bubble:hover { transform: scale(1.1); }
     .floating-bubble:active { transform: scale(0.9); }
 
-    /* Modals for Info & Input Name */
     .modal-overlay {
-      position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+      position: fixed; inset: 0; background: rgba(0,0,0,0.8);
       display: none; align-items: center; justify-content: center; z-index: 200;
     }
     .modal-content {
@@ -138,6 +129,15 @@
       outline: none;
     }
     .modal-content input:focus { box-shadow: 0 0 0 2px #3b82f6; }
+
+    /* Leaderboard Styling */
+    .lb-row {
+      display: flex; justify-content: space-between; padding: 10px 5px;
+      border-bottom: 1px solid #334155; font-size: 16px; font-weight: bold;
+    }
+    .lb-row:last-child { border-bottom: none; }
+    .lb-rank1 { color: #fbbf24; }
+    .lb-name { flex: 1; text-align: left; padding-left: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .penalty-text {
       position: absolute; color: #ef4444; font-weight: bold; font-size: 24px;
@@ -170,15 +170,30 @@
       <img src="bg-logo.png" alt="Dlicom Logo">
       <h1>Arrow Jam</h1>
       <p>Clear the arrows before time runs out!</p>
+      
       <div class="btn-group">
         <button class="btn-primary" onclick="showNameModal()" style="font-size: 20px; padding: 12px 30px;">PLAY</button>
         <button class="btn-secondary" onclick="showInfoModal()" style="font-size: 20px; padding: 12px 30px;">INFO</button>
       </div>
-      <!-- Volume Slider di Menu -->
+      
+      <!-- Tombol Leaderboard Baru -->
+      <button class="btn-gold" onclick="showLeaderboardModal()">🏆 LEADERBOARD</button>
+
       <div class="volume-container" style="margin-top: 25px;">
         <span class="vol-icon">🔉</span>
         <input type="range" class="vol-slider" min="0" max="1" step="0.01" value="0.3">
       </div>
+    </div>
+  </div>
+
+  <!-- Leaderboard Modal -->
+  <div id="leaderboard-modal" class="modal-overlay">
+    <div class="modal-content">
+      <h2 style="color: #fbbf24;">Top Players 🏆</h2>
+      <div id="leaderboard-list" style="margin-bottom: 20px; max-height: 200px; overflow-y: auto;">
+        <!-- List akan di-generate via JS -->
+      </div>
+      <button class="btn-secondary" onclick="closeLeaderboardModal()" style="width: 100%;">Close</button>
     </div>
   </div>
 
@@ -187,9 +202,9 @@
     <div class="modal-content">
       <h2>How to Play 🎯</h2>
       <p>1. <strong>Click an arrow</strong> to remove it from the board.</p>
-      <p>2. Arrows can only move if their <strong>path is clear</strong> (not blocked by other arrows).</p>
+      <p>2. Arrows can only move if their <strong>path is clear</strong>.</p>
       <p>3. <strong>CAREFUL:</strong> If an arrow hits another, you get a <strong>-1 second</strong> penalty!</p>
-      <p>4. Clear all arrows as fast as possible. Higher levels have more complex, interlocking arrows.</p>
+      <p>4. Clear all arrows fast. Higher levels interlock more.</p>
       <button class="btn-primary" onclick="closeInfoModal()" style="width: 100%; margin-top: 10px;">Close</button>
     </div>
   </div>
@@ -198,7 +213,7 @@
   <div id="name-modal" class="modal-overlay">
     <div class="modal-content">
       <h2>Enter Your Name 🎮</h2>
-      <input type="text" id="player-name" placeholder="Player Name" maxlength="15" autocomplete="off" />
+      <input type="text" id="player-name" placeholder="Player Name" maxlength="12" autocomplete="off" />
       <div class="btn-group" style="justify-content: center;">
         <button class="btn-secondary" onclick="closeNameModal()">Cancel</button>
         <button class="btn-primary" onclick="confirmNameAndStart()">Start</button>
@@ -210,7 +225,6 @@
   <div id="game-container">
     <div class="info-bar">
       <div>👤 <span id="display-player-name" style="color: #3b82f6;">Player</span> | Best: <span id="best-level-label" style="color: #f59e0b;">1</span></div>
-      <!-- Volume Slider In-Game -->
       <div class="volume-container">
         <span class="vol-icon">🔉</span>
         <input type="range" class="vol-slider" min="0" max="1" step="0.01" value="0.3">
@@ -228,7 +242,7 @@
       <div id="overlay">
         <h2 id="overlay-msg">Level Clear! 🎉</h2>
         <div class="btn-group">
-          <button id="menu-btn" class="btn-secondary" onclick="goMainMenu()" style="display: none;">Main Menu</button>
+          <button id="menu-btn" class="btn-secondary" onclick="goMainMenu()" style="display: none;">Menu</button>
           <button id="action-btn" class="btn-primary" onclick="handleOverlayClick()">Next Level</button>
         </div>
       </div>
@@ -261,15 +275,63 @@
     let isGameOver = false;
     let hasWon = false;
 
+    // --- LEADERBOARD LOGIC ---
+    function updateLeaderboard(playerName, newBestLevel) {
+      let boardData = JSON.parse(localStorage.getItem('dlicom_leaderboard')) || [];
+      let playerKey = playerName.toLowerCase();
+      
+      let existingPlayer = boardData.find(p => p.id === playerKey);
+      
+      if (existingPlayer) {
+        if (newBestLevel > existingPlayer.level) {
+          existingPlayer.level = newBestLevel;
+          existingPlayer.name = playerName; // Update casing in case they typed it differently
+        }
+      } else {
+        boardData.push({ id: playerKey, name: playerName, level: newBestLevel });
+      }
+
+      // Sort descending by level, keep top 5
+      boardData.sort((a, b) => b.level - a.level);
+      boardData = boardData.slice(0, 5);
+      
+      localStorage.setItem('dlicom_leaderboard', JSON.stringify(boardData));
+    }
+
+    function showLeaderboardModal() {
+      const listEl = document.getElementById('leaderboard-list');
+      let boardData = JSON.parse(localStorage.getItem('dlicom_leaderboard')) || [];
+      
+      listEl.innerHTML = '';
+      
+      if (boardData.length === 0) {
+        listEl.innerHTML = '<p style="color: #94a3b8; text-align: center;">No scores yet. Be the first!</p>';
+      } else {
+        boardData.forEach((player, index) => {
+          const isTop = index === 0;
+          listEl.innerHTML += `
+            <div class="lb-row ${isTop ? 'lb-rank1' : ''}">
+              <span style="width: 25px;">#${index + 1}</span>
+              <span class="lb-name">${player.name}</span>
+              <span style="width: 60px; text-align: right;">Lv ${player.level}</span>
+            </div>
+          `;
+        });
+      }
+      
+      document.getElementById('leaderboard-modal').style.display = 'flex';
+    }
+    function closeLeaderboardModal() { document.getElementById('leaderboard-modal').style.display = 'none'; }
+    // -------------------------
+
     // --- AUDIO SYSTEM & VOLUME LOGIC ---
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
     
-    let currentVolume = 0.3; // Default volume
+    let currentVolume = 0.3; 
     const volSliders = document.querySelectorAll('.vol-slider');
     const volIcons = document.querySelectorAll('.vol-icon');
 
-    // Memicu audio saat ada klik pertama kali di mana saja
     document.addEventListener('click', () => {
       if (currentVolume > 0 && bgmAudio.paused) {
         if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -278,15 +340,12 @@
       }
     });
 
-    // Fungsi update UI Volume (Sinkronisasi Slider 1 dan 2)
     function updateVolume(val) {
       currentVolume = parseFloat(val);
       bgmAudio.volume = currentVolume;
-      
       let iconText = '🔊';
       if (currentVolume === 0) iconText = '🔇';
       else if (currentVolume < 0.5) iconText = '🔉';
-
       volSliders.forEach(slider => slider.value = currentVolume);
       volIcons.forEach(icon => icon.innerText = iconText);
     }
@@ -301,7 +360,6 @@
       });
     });
 
-    // Kalau Icon Volume diklik, otomatis jadi Mute/Unmute
     volIcons.forEach(icon => {
       icon.addEventListener('click', () => {
         if (currentVolume > 0) {
@@ -313,47 +371,39 @@
       });
     });
 
-    // Efek Sound Generator
     function playSound(type) {
       if (currentVolume === 0) return;
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      
-      // Volume multiplier untuk SFX agar seimbang dengan BGM
       let sfxMult = currentVolume * 2; 
       
       if (type === 'error') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.2);
         gain.gain.setValueAtTime(0.1 * sfxMult, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01 * sfxMult, audioCtx.currentTime + 0.2);
         osc.start(); osc.stop(audioCtx.currentTime + 0.2);
       } else if (type === 'levelup') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+        osc.type = 'square'; osc.frequency.setValueAtTime(400, audioCtx.currentTime);
         osc.frequency.setValueAtTime(600, audioCtx.currentTime + 0.1);
         osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
         gain.gain.setValueAtTime(0.1 * sfxMult, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
         osc.start(); osc.stop(audioCtx.currentTime + 0.4);
       } else if (type === 'gameover') {
-        osc.type = 'sawtooth'; 
-        osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+        osc.type = 'sawtooth'; osc.frequency.setValueAtTime(300, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.8);
         gain.gain.setValueAtTime(0.15 * sfxMult, audioCtx.currentTime);
         gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
         osc.start(); osc.stop(audioCtx.currentTime + 0.8);
       } else if (type === 'pop') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+        osc.type = 'sine'; osc.frequency.setValueAtTime(600, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
         gain.gain.setValueAtTime(0.05 * sfxMult, audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01 * sfxMult, audioCtx.currentTime + 0.1);
         osc.start(); osc.stop(audioCtx.currentTime + 0.1);
       }
-      
       osc.connect(gain); gain.connect(audioCtx.destination);
     }
     // ------------------------------------
@@ -365,35 +415,24 @@
       const glow = document.getElementById('mouse-glow');
       glow.style.left = e.clientX + 'px';
       glow.style.top = e.clientY + 'px';
-      
       const hue = Math.round((e.clientX / window.innerWidth) * 360);
       glow.style.background = `radial-gradient(circle, hsla(${hue}, 80%, 60%, 0.4) 0%, rgba(0,0,0,0) 70%)`;
     });
 
     function startMenuEffects() {
       if (bubbleInterval) clearInterval(bubbleInterval);
-      
       bubbleInterval = setInterval(() => {
         const startScreen = document.getElementById('start-screen');
-        if (startScreen.style.display === 'none') {
-          clearInterval(bubbleInterval);
-          return;
-        }
+        if (startScreen.style.display === 'none') { clearInterval(bubbleInterval); return; }
 
         const bubble = document.createElement('div');
         bubble.className = 'floating-bubble';
-        
         const size = Math.floor(Math.random() * 30) + 20; 
-        bubble.style.width = size + 'px';
-        bubble.style.height = size + 'px';
-        
-        bubble.style.left = Math.random() * 100 + 'vw';
-        bubble.style.bottom = '-60px';
+        bubble.style.width = size + 'px'; bubble.style.height = size + 'px';
+        bubble.style.left = Math.random() * 100 + 'vw'; bubble.style.bottom = '-60px';
         
         const color = COLORS[Math.floor(Math.random() * COLORS.length)];
-        bubble.style.backgroundColor = color;
-        bubble.style.opacity = '0.75';
-        
+        bubble.style.backgroundColor = color; bubble.style.opacity = '0.75';
         startScreen.appendChild(bubble);
 
         const duration = Math.random() * 4000 + 4000;
@@ -405,13 +444,9 @@
         ], { duration: duration, easing: 'linear', fill: 'forwards' });
 
         bubble.addEventListener('mousedown', (e) => {
-          playSound('pop');
-          createMenuParticles(e.clientX, e.clientY, color);
-          bubble.remove();
+          playSound('pop'); createMenuParticles(e.clientX, e.clientY, color); bubble.remove();
         });
-
         anim.onfinish = () => bubble.remove();
-
       }, 400); 
     }
 
@@ -419,12 +454,9 @@
       const container = document.getElementById('start-screen');
       for (let i = 0; i < 8; i++) {
         const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.backgroundColor = color;
-        p.style.left = (x - 6) + 'px'; 
-        p.style.top = (y - 6) + 'px';
-        p.style.position = 'fixed';
-        p.style.zIndex = '50';
+        p.className = 'particle'; p.style.backgroundColor = color;
+        p.style.left = (x - 6) + 'px'; p.style.top = (y - 6) + 'px';
+        p.style.position = 'fixed'; p.style.zIndex = '50';
         container.appendChild(p);
 
         const angle = Math.random() * Math.PI * 2;
@@ -432,14 +464,10 @@
         const dx = Math.cos(angle) * velocity;
         const dy = Math.sin(angle) * velocity;
         
-        setTimeout(() => {
-          p.style.transform = `translate(${dx}px, ${dy}px) scale(0)`;
-          p.style.opacity = '0';
-        }, 10);
+        setTimeout(() => { p.style.transform = `translate(${dx}px, ${dy}px) scale(0)`; p.style.opacity = '0'; }, 10);
         setTimeout(() => p.remove(), 450);
       }
     }
-
     startMenuEffects();
     // -------------------------------
 
@@ -454,7 +482,6 @@
       document.getElementById('name-modal').style.display = 'flex';
       setTimeout(() => { nameInputEl.select(); }, 100); 
     }
-    
     function closeNameModal() { document.getElementById('name-modal').style.display = 'none'; }
 
     function confirmNameAndStart() {
@@ -466,6 +493,10 @@
       
       let playerKey = nameInput.toLowerCase();
       bestLevel = parseInt(localStorage.getItem('dlicom_best_level_' + playerKey)) || 1;
+      
+      // Update the leaderboard immediately when they start (in case they haven't been saved yet)
+      updateLeaderboard(nameInput, bestLevel);
+      
       bestLevelLabel.innerText = bestLevel;
       
       document.getElementById('name-modal').style.display = 'none';
@@ -479,7 +510,6 @@
     function goMainMenu() {
       isGameOver = true;
       clearInterval(timerInterval);
-      
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('game-container').style.display = 'none';
       document.getElementById('start-screen').style.display = 'flex';
@@ -504,8 +534,7 @@
             for (let y = 0; y < GRID_ROWS; y++) {
               if (!newArrows.some(a => a.x === x && a.y === y)) {
                 let isAdjacent = newArrows.some(a => 
-                  (Math.abs(a.x - x) === 1 && a.y === y) || 
-                  (Math.abs(a.y - y) === 1 && a.x === x)
+                  (Math.abs(a.x - x) === 1 && a.y === y) || (Math.abs(a.y - y) === 1 && a.x === x)
                 );
                 if (isAdjacent) candidateCells.push({x, y});
               }
@@ -612,8 +641,7 @@
         
         el.addEventListener('click', (e) => tryMoveArrow(arr.id, e, arr.color));
         el.addEventListener('touchstart', (e) => {
-          e.preventDefault(); 
-          tryMoveArrow(arr.id, e.touches[0], arr.color);
+          e.preventDefault(); tryMoveArrow(arr.id, e.touches[0], arr.color);
         }, {passive: false});
 
         board.appendChild(el);
@@ -641,10 +669,8 @@
     function createParticles(x, y, color) {
       for (let i = 0; i < 6; i++) {
         const p = document.createElement('div');
-        p.className = 'particle';
-        p.style.backgroundColor = color;
-        p.style.left = (x + 15) + 'px'; 
-        p.style.top = (y + 15) + 'px';
+        p.className = 'particle'; p.style.backgroundColor = color;
+        p.style.left = (x + 15) + 'px'; p.style.top = (y + 15) + 'px';
         p.style.transform = 'translate(0px, 0px) scale(1)';
         board.appendChild(p);
 
@@ -653,11 +679,7 @@
         const dx = Math.cos(angle) * velocity;
         const dy = Math.sin(angle) * velocity;
         
-        setTimeout(() => {
-          p.style.transform = `translate(${dx}px, ${dy}px) scale(0)`;
-          p.style.opacity = '0';
-        }, 20);
-
+        setTimeout(() => { p.style.transform = `translate(${dx}px, ${dy}px) scale(0)`; p.style.opacity = '0'; }, 20);
         setTimeout(() => p.remove(), 450);
       }
     }
@@ -681,30 +703,18 @@
       });
 
       if (blocked) {
-        el.classList.remove('blocked');
-        void el.offsetWidth; 
-        el.classList.add('blocked');
-
-        playSound('error'); 
-        timeLeft -= 1;
+        el.classList.remove('blocked'); void el.offsetWidth; el.classList.add('blocked');
+        playSound('error'); timeLeft -= 1;
         
-        const xPos = event.clientX || event.pageX;
-        const yPos = event.clientY || event.pageY;
+        const xPos = event.clientX || event.pageX; const yPos = event.clientY || event.pageY;
         if (xPos && yPos) showPenaltyText(xPos, yPos);
 
-        if (timeLeft <= 0) {
-          timeLeft = 0;
-          updateTimerUI();
-          endGame(false);
-        } else {
-          updateTimerUI();
-        }
+        if (timeLeft <= 0) { timeLeft = 0; updateTimerUI(); endGame(false); } 
+        else { updateTimerUI(); }
         return;
       }
 
-      let destX = target.x * CELL_SIZE;
-      let destY = target.y * CELL_SIZE;
-
+      let destX = target.x * CELL_SIZE; let destY = target.y * CELL_SIZE;
       if (target.dir === 'UP') destY = -100;
       if (target.dir === 'DOWN') destY = 450;
       if (target.dir === 'LEFT') destX = -100;
@@ -712,30 +722,20 @@
 
       el.style.transform = `translate(${destX - target.x * CELL_SIZE}px, ${destY - target.y * CELL_SIZE}px)`;
       el.style.opacity = '0';
-
       arrows = arrows.filter(a => a.id !== id);
 
       setTimeout(() => {
-        createParticles(target.x * CELL_SIZE, target.y * CELL_SIZE, color); 
-        el.remove();
-        if (arrows.length === 0 && !isGameOver) { 
-          playSound('levelup'); 
-          endGame(true); 
-        }
+        createParticles(target.x * CELL_SIZE, target.y * CELL_SIZE, color); el.remove();
+        if (arrows.length === 0 && !isGameOver) { playSound('levelup'); endGame(true); }
       }, 200);
     }
 
     function showPenaltyText(x, y) {
       const penaltyEl = document.createElement('div');
-      penaltyEl.className = 'penalty-text';
-      penaltyEl.innerText = '-1s';
-      
+      penaltyEl.className = 'penalty-text'; penaltyEl.innerText = '-1s';
       const boardRect = board.getBoundingClientRect();
-      penaltyEl.style.left = `${x - boardRect.left - 20}px`;
-      penaltyEl.style.top = `${y - boardRect.top - 20}px`;
-      
-      board.appendChild(penaltyEl);
-      setTimeout(() => penaltyEl.remove(), 600);
+      penaltyEl.style.left = `${x - boardRect.left - 20}px`; penaltyEl.style.top = `${y - boardRect.top - 20}px`;
+      board.appendChild(penaltyEl); setTimeout(() => penaltyEl.remove(), 600);
     }
 
     function endGame(won) {
@@ -754,6 +754,8 @@
           let playerKey = currentPlayer.toLowerCase();
           localStorage.setItem('dlicom_best_level_' + playerKey, bestLevel);
           bestLevelLabel.innerText = bestLevel;
+          
+          updateLeaderboard(currentPlayer, bestLevel);
         }
       } else {
         overlayMsg.innerText = 'Game Over! ⏰';
@@ -764,11 +766,7 @@
     }
 
     function handleOverlayClick() {
-      if (hasWon) {
-        currentLevel++;
-      } else {
-        currentLevel = 1;
-      }
+      if (hasWon) { currentLevel++; } else { currentLevel = 1; }
       initLevel(currentLevel);
     }
   </script>
