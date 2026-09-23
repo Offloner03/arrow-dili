@@ -101,9 +101,9 @@
       pointer-events: none; transform: translate(-50%, -50%); z-index: 1;
     }
 
-    /* Balon Interaktif */
+    /* Balon Interaktif - Cursor dikembalikan ke bentuk default biasa */
     .floating-bubble {
-      position: absolute; border-radius: 50%; cursor: crosshair; z-index: 2;
+      position: absolute; border-radius: 50%; cursor: default; z-index: 2;
       box-shadow: inset 0 0 12px rgba(255,255,255,0.6), 0 0 15px rgba(0,0,0,0.3);
       transition: transform 0.1s;
     }
@@ -249,6 +249,15 @@
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
+    // Trigger BGM nyala pertama kali saat ada interaksi user di manapun (klik)
+    document.addEventListener('click', () => {
+      if (!isMuted && bgmAudio.paused) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        bgmAudio.volume = 0.3;
+        bgmAudio.play().catch(e => console.log("Menunggu interaksi klik lebih lanjut"));
+      }
+    });
+
     function toggleMute() {
       isMuted = !isMuted;
       document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';
@@ -288,7 +297,6 @@
         gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
         osc.start(); osc.stop(audioCtx.currentTime + 0.8);
       } else if (type === 'pop') {
-        // Suara klik balon kecil
         osc.type = 'sine';
         osc.frequency.setValueAtTime(600, audioCtx.currentTime);
         osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1);
@@ -303,13 +311,11 @@
     // --- MAIN MENU EFFECTS LOGIC ---
     let bubbleInterval = null;
 
-    // Update warna dan posisi cahaya ngikutin mouse
     document.getElementById('start-screen').addEventListener('mousemove', (e) => {
       const glow = document.getElementById('mouse-glow');
       glow.style.left = e.clientX + 'px';
       glow.style.top = e.clientY + 'px';
       
-      // Ubah hue (warna pelangi) berdasarkan koordinat X mouse di layar
       const hue = Math.round((e.clientX / window.innerWidth) * 360);
       glow.style.background = `radial-gradient(circle, hsla(${hue}, 80%, 60%, 0.4) 0%, rgba(0,0,0,0) 70%)`;
     });
@@ -327,12 +333,10 @@
         const bubble = document.createElement('div');
         bubble.className = 'floating-bubble';
         
-        // Ukuran random (20px - 50px)
         const size = Math.floor(Math.random() * 30) + 20; 
         bubble.style.width = size + 'px';
         bubble.style.height = size + 'px';
         
-        // Posisi mulai acak di bawah layar
         bubble.style.left = Math.random() * 100 + 'vw';
         bubble.style.bottom = '-60px';
         
@@ -342,16 +346,14 @@
         
         startScreen.appendChild(bubble);
 
-        // Animasi melayang ke atas (Web Animations API)
         const duration = Math.random() * 4000 + 4000;
-        const drift = (Math.random() - 0.5) * 150; // Belok kiri/kanan sedikit
+        const drift = (Math.random() - 0.5) * 150;
         
         const anim = bubble.animate([
           { transform: 'translate(0, 0) scale(1)', opacity: 0.8 },
           { transform: `translate(${drift}px, -110vh) scale(1.2)`, opacity: 0 }
         ], { duration: duration, easing: 'linear', fill: 'forwards' });
 
-        // Event pas balon diklik!
         bubble.addEventListener('mousedown', (e) => {
           playSound('pop');
           createMenuParticles(e.clientX, e.clientY, color);
@@ -360,10 +362,9 @@
 
         anim.onfinish = () => bubble.remove();
 
-      }, 400); // Munculin balon tiap 400ms
+      }, 400); 
     }
 
-    // Partikel ledakan balon di menu
     function createMenuParticles(x, y, color) {
       const container = document.getElementById('start-screen');
       for (let i = 0; i < 8; i++) {
@@ -389,7 +390,6 @@
       }
     }
 
-    // Jalankan efek menu saat pertama dibuka
     startMenuEffects();
     // -------------------------------
 
@@ -422,12 +422,6 @@
       document.getElementById('start-screen').style.display = 'none';
       document.getElementById('game-container').style.display = 'flex';
       
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      if (!isMuted) {
-        bgmAudio.volume = 0.3; 
-        bgmAudio.play().catch(e => console.log("BGM requires user interaction"));
-      }
-      
       currentLevel = 1; 
       initLevel(currentLevel);
     }
@@ -435,12 +429,10 @@
     function goMainMenu() {
       isGameOver = true;
       clearInterval(timerInterval);
-      bgmAudio.pause(); 
+      // BGM TIDAK di-pause saat kembali ke menu utama agar musik jalan terus
       document.getElementById('overlay').style.display = 'none';
       document.getElementById('game-container').style.display = 'none';
       document.getElementById('start-screen').style.display = 'flex';
-      
-      // Nyalakan kembali efek balon terbang saat kembali ke menu
       startMenuEffects(); 
     }
 
