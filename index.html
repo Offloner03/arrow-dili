@@ -137,6 +137,7 @@
     }
     .lb-row:last-child { border-bottom: none; }
     .lb-rank1 { color: #fbbf24; }
+    .lb-rank2 { color: #94a3b8; }
     .lb-name { flex: 1; text-align: left; padding-left: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
     .penalty-text {
@@ -176,7 +177,7 @@
         <button class="btn-secondary" onclick="showInfoModal()" style="font-size: 20px; padding: 12px 30px;">INFO</button>
       </div>
       
-      <!-- Tombol Leaderboard Baru -->
+      <!-- Tombol Leaderboard -->
       <button class="btn-gold" onclick="showLeaderboardModal()">🏆 LEADERBOARD</button>
 
       <div class="volume-container" style="margin-top: 25px;">
@@ -250,6 +251,22 @@
   </div>
 
   <script>
+    // --- RESET ON REFRESH & LEGENDARY BOSSES ---
+    // 1. Hapus semua skor dan nama yang tersimpan sebelumnya di memori browser saat refresh
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('dlicom_')) {
+        localStorage.removeItem(key);
+      }
+    });
+
+    // 2. Suntikkan 2 Legenda abadi (MQadriah & Reez) ke Leaderboard
+    const legendaryPlayers = [
+      { id: 'mqadriah', name: 'MQadriah', level: 31 },
+      { id: 'reez', name: 'Reez', level: 22 }
+    ];
+    localStorage.setItem('dlicom_leaderboard', JSON.stringify(legendaryPlayers));
+    // ---------------------------------------------
+
     const CELL_SIZE = 50; 
     const GRID_COLS = 7;
     const GRID_ROWS = 7;
@@ -285,13 +302,12 @@
       if (existingPlayer) {
         if (newBestLevel > existingPlayer.level) {
           existingPlayer.level = newBestLevel;
-          existingPlayer.name = playerName; // Update casing in case they typed it differently
+          existingPlayer.name = playerName; 
         }
       } else {
         boardData.push({ id: playerKey, name: playerName, level: newBestLevel });
       }
 
-      // Sort descending by level, keep top 5
       boardData.sort((a, b) => b.level - a.level);
       boardData = boardData.slice(0, 5);
       
@@ -304,20 +320,18 @@
       
       listEl.innerHTML = '';
       
-      if (boardData.length === 0) {
-        listEl.innerHTML = '<p style="color: #94a3b8; text-align: center;">No scores yet. Be the first!</p>';
-      } else {
-        boardData.forEach((player, index) => {
-          const isTop = index === 0;
-          listEl.innerHTML += `
-            <div class="lb-row ${isTop ? 'lb-rank1' : ''}">
-              <span style="width: 25px;">#${index + 1}</span>
-              <span class="lb-name">${player.name}</span>
-              <span style="width: 60px; text-align: right;">Lv ${player.level}</span>
-            </div>
-          `;
-        });
-      }
+      boardData.forEach((player, index) => {
+        let rankClass = '';
+        if (index === 0) rankClass = 'lb-rank1';
+        if (index === 1) rankClass = 'lb-rank2';
+        listEl.innerHTML += `
+          <div class="lb-row ${rankClass}">
+            <span style="width: 25px;">#${index + 1}</span>
+            <span class="lb-name">${player.name}</span>
+            <span style="width: 60px; text-align: right;">Lv ${player.level}</span>
+          </div>
+        `;
+      });
       
       document.getElementById('leaderboard-modal').style.display = 'flex';
     }
@@ -476,6 +490,7 @@
     function closeInfoModal() { document.getElementById('info-modal').style.display = 'none'; }
 
     function showNameModal() {
+      // Karena kita hapus localStorage saat refresh, ini akan selalu kosong (memaksa user input nama baru)
       const savedName = localStorage.getItem('dlicom_last_player') || "";
       const nameInputEl = document.getElementById('player-name');
       nameInputEl.value = savedName;
@@ -494,9 +509,7 @@
       let playerKey = nameInput.toLowerCase();
       bestLevel = parseInt(localStorage.getItem('dlicom_best_level_' + playerKey)) || 1;
       
-      // Update the leaderboard immediately when they start (in case they haven't been saved yet)
       updateLeaderboard(nameInput, bestLevel);
-      
       bestLevelLabel.innerText = bestLevel;
       
       document.getElementById('name-modal').style.display = 'none';
