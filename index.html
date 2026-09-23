@@ -3,81 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arrow Clear Puzzle</title>
+  <title>Dlicom Arrow Jam 🎯</title>
+  <link rel="icon" type="image/png" href="logo.png" />
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
     body {
       margin: 0; padding: 0;
-      background: #0f172a; /* Background gelap / Navy */
+      background: #0f172a; 
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       min-height: 100vh; overflow: hidden;
     }
 
-    /* 👇 WATERMARK LUAR (Serong ala Shutterstock pakai gambar bg-logo.png) 👇 */
     .watermark-bg {
-      position: fixed;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background-image: url('bg-logo.png'); /* Ganti nama file gambar kedua kamu jadi ini */
-      background-repeat: repeat; 
-      background-size: 300px; /* Ukuran gambar background, bisa disesuaikan */
-      transform: rotate(-25deg); 
-      opacity: 0.05; 
-      pointer-events: none; 
-      z-index: -1; 
+      position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
+      background-image: url('bg-logo.png'); background-repeat: repeat; 
+      background-size: 500px; transform: rotate(-25deg); 
+      opacity: 0.05; pointer-events: none; z-index: -1; 
     }
 
-    #game-container { width: 360px; display: flex; flex-direction: column; align-items: center; position: relative; z-index: 5; }
+    /* Asalnya disembunyikan sehingga butang Mula ditekan */
+    #game-container { width: 360px; display: none; flex-direction: column; align-items: center; position: relative; z-index: 5; }
     
-    .header {
-      width: 100%; display: flex; justify-content: space-between;
-      align-items: center; margin-bottom: 15px; padding: 0 10px;
+    .info-bar {
+      width: 100%; display: flex; justify-content: space-between; align-items: center;
+      padding: 0 10px; margin-bottom: 10px; color: #94a3b8; font-weight: 700;
     }
-    
+    #mute-btn { cursor: pointer; font-size: 22px; transition: transform 0.2s; }
+    #mute-btn:active { transform: scale(0.8); }
+
+    .header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px; }
     .level-text { font-size: 24px; font-weight: 800; color: #ffffff; white-space: nowrap; }
-    .timer-bar {
-      flex: 1; height: 8px; background: #334155;
-      border-radius: 4px; margin: 0 15px; overflow: hidden;
-    }
+    .timer-bar { flex: 1; height: 8px; background: #334155; border-radius: 4px; margin: 0 15px; overflow: hidden; }
     .timer-fill { height: 100%; width: 100%; background: #f59e0b; transition: width 0.1s linear; }
-    .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 40px; text-align: right; }
+    .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 45px; text-align: right; }
     
-    #board {
-      width: 350px; height: 350px;
-      position: relative; 
-      background: transparent; 
-      border-radius: 16px; 
-      box-shadow: none; 
-      overflow: hidden;
-    }
+    #board { width: 350px; height: 350px; position: relative; background: transparent; border-radius: 16px; overflow: hidden; }
 
-    /* 👇 WATERMARK DALAM (Tengah board pakai gambar logo.png) 👇 */
     #board::before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 280px; 
-      height: 280px;
-      background-image: url('logo.png'); /* Gambar pertama kamu */
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      opacity: 0.15;
-      pointer-events: none;
-      z-index: 0;
+      content: ""; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 350px; height: 350px; background-image: url('logo.png'); 
+      background-size: contain; background-repeat: no-repeat; background-position: center;
+      opacity: 0.6; pointer-events: none; z-index: 0;
     }
 
     .arrow {
       position: absolute; width: 50px; height: 50px; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      transition: transform 0.25s ease-out, opacity 0.25s ease-out;
-      z-index: 1; 
+      transition: transform 0.25s ease-out, opacity 0.25s ease-out; z-index: 1; 
     }
     .arrow svg { width: 90%; height: 90%; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)); }
     .blocked { animation: shake 0.3s ease-in-out; }
@@ -91,42 +65,74 @@
     }
     
     #overlay {
-      position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85);
-      display: none; flex-direction: column; align-items: center;
-      justify-content: center; color: #fff; z-index: 10; border-radius: 16px;
+      position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); display: none; flex-direction: column; 
+      align-items: center; justify-content: center; color: #fff; z-index: 10; border-radius: 16px;
     }
     #overlay h2 { margin: 0 0 10px 0; font-size: 28px; text-align: center; }
-    #action-btn {
+    
+    .btn-primary {
       padding: 10px 24px; background: #3b82f6; border: none; color: white;
       font-weight: 700; border-radius: 8px; cursor: pointer; font-size: 16px; margin-top: 10px;
+      transition: background 0.2s;
     }
+    .btn-primary:hover { background: #2563eb; }
+
+    #start-screen {
+      position: fixed; inset: 0; background: #0f172a;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 100; color: white; text-align: center;
+    }
+    #start-screen img { width: 250px; margin-bottom: 20px; opacity: 0.9; }
+    #start-screen h1 { font-size: 32px; margin: 0 0 10px 0; }
+    #start-screen p { color: #94a3b8; margin-bottom: 30px; font-weight: 600; }
+
     .penalty-text {
       position: absolute; color: #ef4444; font-weight: bold; font-size: 24px;
       pointer-events: none; animation: floatUp 0.6s ease-out forwards; z-index: 20;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
     }
     @keyframes floatUp {
       0% { opacity: 1; transform: translateY(0) scale(1); }
       100% { opacity: 0; transform: translateY(-30px) scale(1.5); }
     }
+
+    .particle {
+      position: absolute; width: 12px; height: 12px; border-radius: 50%;
+      pointer-events: none; z-index: 15;
+      transition: transform 0.4s cubic-bezier(0.1, 0.8, 0.3, 1), opacity 0.4s ease-out;
+    }
   </style>
 </head>
 <body>
 
+  <audio id="bgm" src="bgm.mp3" loop preload="auto"></audio>
+
   <div class="watermark-bg"></div>
 
+  <div id="start-screen">
+    <img src="bg-logo.png" alt="Dlicom Logo">
+    <h1>Arrow Jam</h1>
+    <p>Clear the arrows before time runs out!</p>
+    <button class="btn-primary" onclick="startGame()" style="font-size: 20px; padding: 12px 30px;">PLAY NOW</button>
+  </div>
+
   <div id="game-container">
+    <div class="info-bar">
+      <div>Best Level: <span id="best-level-label" style="color: #f59e0b;">1</span></div>
+      <div id="mute-btn" onclick="toggleMute()">🔊</div>
+    </div>
+
     <div class="header">
       <img src="logo.png" alt="Dlicom" style="height: 24px; margin-right: 10px;">
       <div class="level-text" id="level-label">Level 1</div>
       <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
-      <div class="timer-text" id="timer-label">15s</div>
+      <div class="timer-text" id="timer-label">15.0s</div>
     </div>
     
     <div id="board">
       <div id="overlay">
         <h2 id="overlay-msg">Level Clear! 🎉</h2>
-        <button id="action-btn" onclick="handleOverlayClick()">Next Level</button>
+        <button id="action-btn" class="btn-primary" onclick="handleOverlayClick()">Next Level</button>
       </div>
     </div>
   </div>
@@ -144,19 +150,37 @@
     const overlayMsg = document.getElementById('overlay-msg');
     const actionBtn = document.getElementById('action-btn');
     const levelLabel = document.getElementById('level-label');
+    const bestLevelLabel = document.getElementById('best-level-label');
+    const bgmAudio = document.getElementById('bgm');
 
     let currentLevel = 1;
+    let bestLevel = localStorage.getItem('dlicom_best_level') || 1;
     let arrows = [];
     let timeLeft = 0;
     let maxTime = 0;
     let timerInterval = null;
     let isGameOver = false;
     let hasWon = false;
+    let isMuted = false;
+
+    // Set skor tertinggi
+    bestLevelLabel.innerText = bestLevel;
 
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     const audioCtx = new AudioContext();
 
+    function toggleMute() {
+      isMuted = !isMuted;
+      document.getElementById('mute-btn').innerText = isMuted ? '🔇' : '🔊';
+      if (isMuted) {
+        bgmAudio.pause();
+      } else {
+        bgmAudio.play().catch(e => console.log("BGM gagal dimainkan"));
+      }
+    }
+
     function playErrorSound() {
+      if (isMuted) return;
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -165,13 +189,12 @@
       osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.2);
       gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.2);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.2);
     }
 
     function playLevelUpSound() {
+      if (isMuted) return;
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -181,13 +204,12 @@
       osc.frequency.setValueAtTime(800, audioCtx.currentTime + 0.2);
       gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
       gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.4);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.4);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.4);
     }
 
     function playGameOverSound() {
+      if (isMuted) return;
       if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
@@ -196,35 +218,51 @@
       osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.8);
       gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
       gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.8);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.8);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(); osc.stop(audioCtx.currentTime + 0.8);
     }
 
+    function startGame() {
+      document.getElementById('start-screen').style.display = 'none';
+      document.getElementById('game-container').style.display = 'flex';
+      
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      if (!isMuted) {
+        bgmAudio.volume = 0.3; 
+        bgmAudio.play().catch(e => console.log("Perlu berinteraksi dengan halaman untuk memainkan audio"));
+      }
+      initLevel(currentLevel);
+    }
+
+    // ALGORITMA BARU: Clumping (Tengah) + Saling Mengunci (Interlocking)
     function generateLevel(levelIdx) {
-      let numArrows = Math.min(3 + Math.floor(levelIdx * 1.5), 45);
-      let timeLimit = Math.max(10, Math.floor(numArrows * 1.5)); 
+      let numArrows = Math.min(3 + Math.floor(levelIdx * 2), 49); 
+      let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
       
       let newArrows = [];
+      const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
       
       for (let i = 0; i < numArrows; i++) {
-        let emptyCells = [];
-        for (let x = 0; x < GRID_COLS; x++) {
-          for (let y = 0; y < GRID_ROWS; y++) {
-            if (!newArrows.some(a => a.x === x && a.y === y)) {
-              emptyCells.push({x, y});
+        let candidates = [];
+        let candidateCells = [];
+        
+        if (newArrows.length === 0) {
+          candidateCells.push({x: Math.floor(GRID_COLS/2), y: Math.floor(GRID_ROWS/2)});
+        } else {
+          for (let x = 0; x < GRID_COLS; x++) {
+            for (let y = 0; y < GRID_ROWS; y++) {
+              if (!newArrows.some(a => a.x === x && a.y === y)) {
+                let isAdjacent = newArrows.some(a => 
+                  (Math.abs(a.x - x) === 1 && a.y === y) || 
+                  (Math.abs(a.y - y) === 1 && a.x === x)
+                );
+                if (isAdjacent) candidateCells.push({x, y});
+              }
             }
           }
         }
         
-        emptyCells.sort(() => Math.random() - 0.5);
-        
-        let placed = false;
-        for (let cell of emptyCells) {
-          let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
-          dirs.sort(() => Math.random() - 0.5); 
-          
+        for (let cell of candidateCells) {
           for (let dir of dirs) {
             let hit = newArrows.some(other => {
               if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
@@ -235,16 +273,57 @@
             });
             
             if (!hit) {
-              newArrows.push({
-                id: i + 1, x: cell.x, y: cell.y, dir: dir,
-                color: COLORS[Math.floor(Math.random() * COLORS.length)]
+              let blockScore = 0;
+              newArrows.forEach(other => {
+                if (other.dir === 'UP' && other.x === cell.x && cell.y < other.y) blockScore++;
+                if (other.dir === 'DOWN' && other.x === cell.x && cell.y > other.y) blockScore++;
+                if (other.dir === 'LEFT' && other.y === cell.y && cell.x < other.x) blockScore++;
+                if (other.dir === 'RIGHT' && other.y === cell.y && cell.x > other.x) blockScore++;
               });
-              placed = true;
-              break;
+              candidates.push({x: cell.x, y: cell.y, dir: dir, blockScore: blockScore});
             }
           }
-          if (placed) break;
         }
+        
+        if (candidates.length === 0) {
+          for (let x = 0; x < GRID_COLS; x++) {
+            for (let y = 0; y < GRID_ROWS; y++) {
+              if (!newArrows.some(a => a.x === x && a.y === y)) {
+                for (let dir of dirs) {
+                  let hit = newArrows.some(other => {
+                    if (dir === 'UP') return other.x === x && other.y < y;
+                    if (dir === 'DOWN') return other.x === x && other.y > y;
+                    if (dir === 'LEFT') return other.y === y && other.x < x;
+                    if (dir === 'RIGHT') return other.y === y && other.x > x;
+                    return false;
+                  });
+                  if (!hit) {
+                    let blockScore = 0;
+                    newArrows.forEach(other => {
+                      if (other.dir === 'UP' && other.x === x && y < other.y) blockScore++;
+                      if (other.dir === 'DOWN' && other.x === x && y > other.y) blockScore++;
+                      if (other.dir === 'LEFT' && other.y === y && x < other.x) blockScore++;
+                      if (other.dir === 'RIGHT' && other.y === y && x > other.x) blockScore++;
+                    });
+                    candidates.push({x, y, dir, blockScore});
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        if (candidates.length === 0) break; 
+        
+        candidates.sort((a, b) => b.blockScore - a.blockScore);
+        let bestScore = candidates[0].blockScore;
+        let bestCandidates = candidates.filter(c => c.blockScore === bestScore);
+        let chosen = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
+        
+        newArrows.push({
+          id: i + 1, x: chosen.x, y: chosen.y, dir: chosen.dir,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)]
+        });
       }
       return { time: timeLimit, arrows: newArrows };
     }
@@ -281,10 +360,11 @@
             <path fill="${arr.color}" d="M50 5 L90 45 L65 45 L65 95 L35 95 L35 45 L10 45 Z"/>
           </svg>`;
         
-        el.addEventListener('click', (e) => tryMoveArrow(arr.id, e));
+        // Hantar warna panah untuk kesan zarah (particles)
+        el.addEventListener('click', (e) => tryMoveArrow(arr.id, e, arr.color));
         el.addEventListener('touchstart', (e) => {
           e.preventDefault(); 
-          tryMoveArrow(arr.id, e.touches[0]);
+          tryMoveArrow(arr.id, e.touches[0], arr.color);
         }, {passive: false});
 
         board.appendChild(el);
@@ -303,13 +383,38 @@
     }
 
     function updateTimerUI() {
-      timerLabel.innerText = `${Math.ceil(timeLeft)}s`;
+      timerLabel.innerText = `${Math.max(0, timeLeft).toFixed(1)}s`; 
       const pct = (timeLeft / maxTime) * 100;
       timerFill.style.width = `${pct}%`;
       timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
     }
 
-    function tryMoveArrow(id, event) {
+    // Kesan Letupan Zarah (Particles)
+    function createParticles(x, y, color) {
+      for (let i = 0; i < 6; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        p.style.backgroundColor = color;
+        p.style.left = (x + 15) + 'px'; 
+        p.style.top = (y + 15) + 'px';
+        p.style.transform = 'translate(0px, 0px) scale(1)';
+        board.appendChild(p);
+
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 20 + Math.random() * 30;
+        const dx = Math.cos(angle) * velocity;
+        const dy = Math.sin(angle) * velocity;
+        
+        setTimeout(() => {
+          p.style.transform = `translate(${dx}px, ${dy}px) scale(0)`;
+          p.style.opacity = '0';
+        }, 20);
+
+        setTimeout(() => p.remove(), 450);
+      }
+    }
+
+    function tryMoveArrow(id, event, color) {
       if (isGameOver) return;
       const target = arrows.find(a => a.id === id);
       if (!target) return;
@@ -363,12 +468,13 @@
       arrows = arrows.filter(a => a.id !== id);
 
       setTimeout(() => {
+        createParticles(target.x * CELL_SIZE, target.y * CELL_SIZE, color); // Hasilkan letupan zarah!
         el.remove();
         if (arrows.length === 0 && !isGameOver) { 
           playLevelUpSound(); 
           endGame(true); 
         }
-      }, 250);
+      }, 200);
     }
 
     function showPenaltyText(x, y) {
@@ -392,6 +498,13 @@
       if (won) {
         overlayMsg.innerText = 'Level Clear! 🎉';
         actionBtn.innerText = 'Next Level';
+        
+        // Simpan markah tertinggi (High Score)
+        if (currentLevel >= bestLevel) {
+          bestLevel = currentLevel + 1;
+          localStorage.setItem('dlicom_best_level', bestLevel);
+          bestLevelLabel.innerText = bestLevel;
+        }
       } else {
         overlayMsg.innerText = 'Game Over! ⏰';
         actionBtn.innerText = 'Try Again';
@@ -407,8 +520,6 @@
       }
       initLevel(currentLevel);
     }
-
-    initLevel(currentLevel);
   </script>
 </body>
 </html>
