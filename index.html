@@ -3,28 +3,28 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dlicom Arrow Jam</title>
-  <link rel="icon" type="image/png" href="logo.png" />
+  <title>Arrow Clear Puzzle</title>
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
     body {
       margin: 0; padding: 0;
-      background: #0f172a; 
+      background: #0f172a; /* Background gelap / Navy */
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
       min-height: 100vh; overflow: hidden;
     }
 
+    /* 👇 WATERMARK LUAR (Serong ala Shutterstock pakai gambar bg-logo.png) 👇 */
     .watermark-bg {
       position: fixed;
       top: -50%;
       left: -50%;
       width: 200%;
       height: 200%;
-      background-image: url('bg-logo.png'); 
+      background-image: url('bg-logo.png'); /* Ganti nama file gambar kedua kamu jadi ini */
       background-repeat: repeat; 
-      background-size: 500px; 
+      background-size: 300px; /* Ukuran gambar background, bisa disesuaikan */
       transform: rotate(-25deg); 
       opacity: 0.05; 
       pointer-events: none; 
@@ -44,7 +44,7 @@
       border-radius: 4px; margin: 0 15px; overflow: hidden;
     }
     .timer-fill { height: 100%; width: 100%; background: #f59e0b; transition: width 0.1s linear; }
-    .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 45px; text-align: right; }
+    .timer-text { font-weight: 700; color: #e2e8f0; font-size: 16px; width: 40px; text-align: right; }
     
     #board {
       width: 350px; height: 350px;
@@ -55,19 +55,20 @@
       overflow: hidden;
     }
 
+    /* 👇 WATERMARK DALAM (Tengah board pakai gambar logo.png) 👇 */
     #board::before {
       content: "";
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      width: 350px; 
-      height: 350px;
-      background-image: url('logo.png'); 
+      width: 280px; 
+      height: 280px;
+      background-image: url('logo.png'); /* Gambar pertama kamu */
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
-      opacity: 0.6;
+      opacity: 0.15;
       pointer-events: none;
       z-index: 0;
     }
@@ -119,7 +120,7 @@
       <img src="logo.png" alt="Dlicom" style="height: 24px; margin-right: 10px;">
       <div class="level-text" id="level-label">Level 1</div>
       <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
-      <div class="timer-text" id="timer-label">15.0s</div>
+      <div class="timer-text" id="timer-label">15s</div>
     </div>
     
     <div id="board">
@@ -201,41 +202,30 @@
       osc.stop(audioCtx.currentTime + 0.8);
     }
 
-    // ALGORITMA BARU: CLUMPING DARI TENGAH + INTERLOCKING (SALING NGUNCI)
     function generateLevel(levelIdx) {
-      // Makin tinggi level, makin penuh
-      let numArrows = Math.min(3 + Math.floor(levelIdx * 2), 49); 
-      // Waktu mepet: cuma dapet 0.85 detik per panah
-      let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
+      let numArrows = Math.min(3 + Math.floor(levelIdx * 1.5), 45);
+      let timeLimit = Math.max(10, Math.floor(numArrows * 1.5)); 
       
       let newArrows = [];
-      const dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
       
       for (let i = 0; i < numArrows; i++) {
-        let candidates = [];
-        let candidateCells = [];
-        
-        // 1. CARI SEL YANG BERSEBELAHAN DARI TENGAH (CLUMPING)
-        if (newArrows.length === 0) {
-          candidateCells.push({x: Math.floor(GRID_COLS/2), y: Math.floor(GRID_ROWS/2)});
-        } else {
-          for (let x = 0; x < GRID_COLS; x++) {
-            for (let y = 0; y < GRID_ROWS; y++) {
-              if (!newArrows.some(a => a.x === x && a.y === y)) {
-                let isAdjacent = newArrows.some(a => 
-                  (Math.abs(a.x - x) === 1 && a.y === y) || 
-                  (Math.abs(a.y - y) === 1 && a.x === x)
-                );
-                if (isAdjacent) candidateCells.push({x, y});
-              }
+        let emptyCells = [];
+        for (let x = 0; x < GRID_COLS; x++) {
+          for (let y = 0; y < GRID_ROWS; y++) {
+            if (!newArrows.some(a => a.x === x && a.y === y)) {
+              emptyCells.push({x, y});
             }
           }
         }
         
-        // 2. CEK ARAH DI SEL CLUMPING & HITUNG SKOR BLOCKING
-        for (let cell of candidateCells) {
+        emptyCells.sort(() => Math.random() - 0.5);
+        
+        let placed = false;
+        for (let cell of emptyCells) {
+          let dirs = ['UP', 'DOWN', 'LEFT', 'RIGHT'];
+          dirs.sort(() => Math.random() - 0.5); 
+          
           for (let dir of dirs) {
-            // Syarat utama: Panah BARU ini nggak boleh nabrak (di depannya harus kosong dari panah yg udah ada)
             let hit = newArrows.some(other => {
               if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
               if (dir === 'DOWN') return other.x === cell.x && other.y > cell.y;
@@ -245,60 +235,16 @@
             });
             
             if (!hit) {
-              // Kalau aman, kita hitung seberapa nyebelin panah ini (seberapa banyak dia ngunci panah yg lama)
-              let blockScore = 0;
-              newArrows.forEach(other => {
-                if (other.dir === 'UP' && other.x === cell.x && cell.y < other.y) blockScore++;
-                if (other.dir === 'DOWN' && other.x === cell.x && cell.y > other.y) blockScore++;
-                if (other.dir === 'LEFT' && other.y === cell.y && cell.x < other.x) blockScore++;
-                if (other.dir === 'RIGHT' && other.y === cell.y && cell.x > other.x) blockScore++;
+              newArrows.push({
+                id: i + 1, x: cell.x, y: cell.y, dir: dir,
+                color: COLORS[Math.floor(Math.random() * COLORS.length)]
               });
-              candidates.push({x: cell.x, y: cell.y, dir: dir, blockScore: blockScore});
+              placed = true;
+              break;
             }
           }
+          if (placed) break;
         }
-        
-        // 3. FALLBACK: Kalau area nempel udah buntu arah keluarnya, baru cari spot random
-        if (candidates.length === 0) {
-          for (let x = 0; x < GRID_COLS; x++) {
-            for (let y = 0; y < GRID_ROWS; y++) {
-              if (!newArrows.some(a => a.x === x && a.y === y)) {
-                for (let dir of dirs) {
-                  let hit = newArrows.some(other => {
-                    if (dir === 'UP') return other.x === x && other.y < y;
-                    if (dir === 'DOWN') return other.x === x && other.y > y;
-                    if (dir === 'LEFT') return other.y === y && other.x < x;
-                    if (dir === 'RIGHT') return other.y === y && other.x > x;
-                    return false;
-                  });
-                  if (!hit) {
-                    let blockScore = 0;
-                    newArrows.forEach(other => {
-                      if (other.dir === 'UP' && other.x === x && y < other.y) blockScore++;
-                      if (other.dir === 'DOWN' && other.x === x && y > other.y) blockScore++;
-                      if (other.dir === 'LEFT' && other.y === y && x < other.x) blockScore++;
-                      if (other.dir === 'RIGHT' && other.y === y && x > other.x) blockScore++;
-                    });
-                    candidates.push({x, y, dir, blockScore});
-                  }
-                }
-              }
-            }
-          }
-        }
-        
-        if (candidates.length === 0) break; 
-        
-        // 4. SELALU PILIH PANAH YANG SKOR BLOCKINGNYA PALING TINGGI
-        candidates.sort((a, b) => b.blockScore - a.blockScore);
-        let bestScore = candidates[0].blockScore;
-        let bestCandidates = candidates.filter(c => c.blockScore === bestScore);
-        let chosen = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
-        
-        newArrows.push({
-          id: i + 1, x: chosen.x, y: chosen.y, dir: chosen.dir,
-          color: COLORS[Math.floor(Math.random() * COLORS.length)]
-        });
       }
       return { time: timeLimit, arrows: newArrows };
     }
@@ -357,7 +303,7 @@
     }
 
     function updateTimerUI() {
-      timerLabel.innerText = `${Math.max(0, timeLeft).toFixed(1)}s`; 
+      timerLabel.innerText = `${Math.ceil(timeLeft)}s`;
       const pct = (timeLeft / maxTime) * 100;
       timerFill.style.width = `${pct}%`;
       timerFill.style.background = pct < 30 ? '#ef4444' : '#f59e0b';
