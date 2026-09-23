@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dlicom Arrow Jam</title>
+  <title>Dlicom Arrow Jam 🎯</title>
   <link rel="icon" type="image/png" href="logo.png" />
   <style>
     * { box-sizing: border-box; user-select: none; -webkit-user-select: none; }
@@ -490,7 +490,7 @@
     function closeInfoModal() { document.getElementById('info-modal').style.display = 'none'; }
 
     function showNameModal() {
-      // Karena kita hapus localStorage saat refresh, ini akan selalu kosong (memaksa user input nama baru)
+      // Karena kita hapus localStorage saat refresh, ini akan selalu kosong
       const savedName = localStorage.getItem('dlicom_last_player') || "";
       const nameInputEl = document.getElementById('player-name');
       nameInputEl.value = savedName;
@@ -503,10 +503,18 @@
       let nameInput = document.getElementById('player-name').value.trim();
       if (!nameInput) nameInput = "Player";
       
+      let playerKey = nameInput.toLowerCase();
+
+      // --- ANTI-IMPOSTER SYSTEM (PROTECT THE BOSSES) ---
+      if (playerKey === 'mqadriah' || playerKey === 'reez') {
+        alert("Nice try, imposter! The name '" + nameInput + "' is reserved for Legendary Bosses. Choose another name! 😂");
+        return; // Hentikan dan paksa ganti nama
+      }
+      // ------------------------------------------------
+
       localStorage.setItem('dlicom_last_player', nameInput);
       document.getElementById('display-player-name').innerText = nameInput;
       
-      let playerKey = nameInput.toLowerCase();
       bestLevel = parseInt(localStorage.getItem('dlicom_best_level_' + playerKey)) || 1;
       
       updateLeaderboard(nameInput, bestLevel);
