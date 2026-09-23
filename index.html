@@ -201,9 +201,11 @@
       osc.stop(audioCtx.currentTime + 0.8);
     }
 
+    // ALGORITMA BARU: CLUMPING DARI TENGAH + INTERLOCKING (SALING NGUNCI)
     function generateLevel(levelIdx) {
-      // Bikin jumlah panah naik lebih cepet tiap levelnya (maksimal 49 panah / full board)
+      // Makin tinggi level, makin penuh
       let numArrows = Math.min(3 + Math.floor(levelIdx * 2), 49); 
+      // Waktu mepet: cuma dapet 0.85 detik per panah
       let timeLimit = Math.max(6, Math.ceil(numArrows * 0.85)); 
       
       let newArrows = [];
@@ -211,44 +213,84 @@
       
       for (let i = 0; i < numArrows; i++) {
         let candidates = [];
+        let candidateCells = [];
         
-        // Cek semua petak kosong dan semua arah
-        for (let x = 0; x < GRID_COLS; x++) {
-          for (let y = 0; y < GRID_ROWS; y++) {
-            if (newArrows.some(a => a.x === x && a.y === y)) continue; // Kalo udah ada panah, skip
-            
-            for (let dir of dirs) {
-              // Pastikan panah baru ini BISA keluar (tidak nabrak panah yg udah ditaruh sebelumnya)
-              let hit = newArrows.some(other => {
-                if (dir === 'UP') return other.x === x && other.y < y;
-                if (dir === 'DOWN') return other.x === x && other.y > y;
-                if (dir === 'LEFT') return other.y === y && other.x < x;
-                if (dir === 'RIGHT') return other.y === y && other.x > x;
-                return false;
-              });
-              
-              if (!hit) {
-                // Algoritma Smart Interlocking: Hitung berapa banyak panah lama yg bakal TERKUNCI sama panah baru ini
-                let blockScore = 0;
-                newArrows.forEach(other => {
-                  if (other.dir === 'UP' && other.x === x && y < other.y) blockScore++;
-                  if (other.dir === 'DOWN' && other.x === x && y > other.y) blockScore++;
-                  if (other.dir === 'LEFT' && other.y === y && x < other.x) blockScore++;
-                  if (other.dir === 'RIGHT' && other.y === y && x > other.x) blockScore++;
-                });
-                
-                candidates.push({x, y, dir, blockScore});
+        // 1. CARI SEL YANG BERSEBELAHAN DARI TENGAH (CLUMPING)
+        if (newArrows.length === 0) {
+          candidateCells.push({x: Math.floor(GRID_COLS/2), y: Math.floor(GRID_ROWS/2)});
+        } else {
+          for (let x = 0; x < GRID_COLS; x++) {
+            for (let y = 0; y < GRID_ROWS; y++) {
+              if (!newArrows.some(a => a.x === x && a.y === y)) {
+                let isAdjacent = newArrows.some(a => 
+                  (Math.abs(a.x - x) === 1 && a.y === y) || 
+                  (Math.abs(a.y - y) === 1 && a.x === x)
+                );
+                if (isAdjacent) candidateCells.push({x, y});
               }
             }
           }
         }
         
-        if (candidates.length === 0) break; // Kalo mentok, stop aja
+        // 2. CEK ARAH DI SEL CLUMPING & HITUNG SKOR BLOCKING
+        for (let cell of candidateCells) {
+          for (let dir of dirs) {
+            // Syarat utama: Panah BARU ini nggak boleh nabrak (di depannya harus kosong dari panah yg udah ada)
+            let hit = newArrows.some(other => {
+              if (dir === 'UP') return other.x === cell.x && other.y < cell.y;
+              if (dir === 'DOWN') return other.x === cell.x && other.y > cell.y;
+              if (dir === 'LEFT') return other.y === cell.y && other.x < cell.x;
+              if (dir === 'RIGHT') return other.y === cell.y && other.x > cell.x;
+              return false;
+            });
+            
+            if (!hit) {
+              // Kalau aman, kita hitung seberapa nyebelin panah ini (seberapa banyak dia ngunci panah yg lama)
+              let blockScore = 0;
+              newArrows.forEach(other => {
+                if (other.dir === 'UP' && other.x === cell.x && cell.y < other.y) blockScore++;
+                if (other.dir === 'DOWN' && other.x === cell.x && cell.y > other.y) blockScore++;
+                if (other.dir === 'LEFT' && other.y === cell.y && cell.x < other.x) blockScore++;
+                if (other.dir === 'RIGHT' && other.y === cell.y && cell.x > other.x) blockScore++;
+              });
+              candidates.push({x: cell.x, y: cell.y, dir: dir, blockScore: blockScore});
+            }
+          }
+        }
         
-        // Urutkan kandidat berdasarkan skor tertinggi (yg paling banyak ngunci panah lain)
+        // 3. FALLBACK: Kalau area nempel udah buntu arah keluarnya, baru cari spot random
+        if (candidates.length === 0) {
+          for (let x = 0; x < GRID_COLS; x++) {
+            for (let y = 0; y < GRID_ROWS; y++) {
+              if (!newArrows.some(a => a.x === x && a.y === y)) {
+                for (let dir of dirs) {
+                  let hit = newArrows.some(other => {
+                    if (dir === 'UP') return other.x === x && other.y < y;
+                    if (dir === 'DOWN') return other.x === x && other.y > y;
+                    if (dir === 'LEFT') return other.y === y && other.x < x;
+                    if (dir === 'RIGHT') return other.y === y && other.x > x;
+                    return false;
+                  });
+                  if (!hit) {
+                    let blockScore = 0;
+                    newArrows.forEach(other => {
+                      if (other.dir === 'UP' && other.x === x && y < other.y) blockScore++;
+                      if (other.dir === 'DOWN' && other.x === x && y > other.y) blockScore++;
+                      if (other.dir === 'LEFT' && other.y === y && x < other.x) blockScore++;
+                      if (other.dir === 'RIGHT' && other.y === y && x > other.x) blockScore++;
+                    });
+                    candidates.push({x, y, dir, blockScore});
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        if (candidates.length === 0) break; 
+        
+        // 4. SELALU PILIH PANAH YANG SKOR BLOCKINGNYA PALING TINGGI
         candidates.sort((a, b) => b.blockScore - a.blockScore);
-        
-        // Ambil kandidat dengan skor terbaik, lalu pilih acak dari yg terbaik itu
         let bestScore = candidates[0].blockScore;
         let bestCandidates = candidates.filter(c => c.blockScore === bestScore);
         let chosen = bestCandidates[Math.floor(Math.random() * bestCandidates.length)];
