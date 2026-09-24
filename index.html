@@ -37,6 +37,9 @@
     .vol-icon { cursor: pointer; font-size: 16px; transition: transform 0.2s; }
     .vol-icon:active { transform: scale(0.8); }
     .vol-slider { width: 70px; cursor: pointer; accent-color: #3b82f6; background: transparent; outline: none; }
+    
+    #pause-btn { cursor: pointer; font-size: 18px; transition: transform 0.2s; padding: 5px; }
+    #pause-btn:active { transform: scale(0.8); }
 
     .header { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding: 0 10px; }
     .level-text { font-size: 24px; font-weight: 800; color: #ffffff; white-space: nowrap; }
@@ -68,11 +71,11 @@
       80% { transform: translate(4px, -2px); }
     }
     
-    #overlay {
+    #overlay, #pause-overlay {
       position: absolute; inset: 0; background: rgba(15, 23, 42, 0.85); display: none; flex-direction: column; 
       align-items: center; justify-content: center; color: #fff; z-index: 10; border-radius: 16px;
     }
-    #overlay h2 { margin: 0 0 10px 0; font-size: 28px; text-align: center; }
+    #overlay h2, #pause-overlay h2 { margin: 0 0 10px 0; font-size: 28px; text-align: center; }
     
     .btn-group { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; justify-content: center;}
     
@@ -226,9 +229,14 @@
   <div id="game-container">
     <div class="info-bar">
       <div>👤 <span id="display-player-name" style="color: #3b82f6;">Player</span> | Best: <span id="best-level-label" style="color: #f59e0b;">1</span></div>
-      <div class="volume-container">
-        <span class="vol-icon">🔉</span>
-        <input type="range" class="vol-slider" min="0" max="1" step="0.01" value="0.3">
+      
+      <!-- Bagian Kanan (Pause & Volume) -->
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <div id="pause-btn" onclick="togglePause()" title="Pause Game">⏸️</div>
+        <div class="volume-container">
+          <span class="vol-icon">🔉</span>
+          <input type="range" class="vol-slider" min="0" max="1" step="0.01" value="0.3">
+        </div>
       </div>
     </div>
 
@@ -240,6 +248,16 @@
     </div>
     
     <div id="board">
+      <!-- Overlay Pause -->
+      <div id="pause-overlay">
+        <h2 style="color: #3b82f6;">PAUSED</h2>
+        <div class="btn-group" style="flex-direction: column; gap: 10px;">
+          <button class="btn-primary" onclick="togglePause()" style="width: 100%;">Resume</button>
+          <button class="btn-secondary" onclick="goMainMenuFromPause()" style="width: 100%;">Main Menu</button>
+        </div>
+      </div>
+
+      <!-- Overlay Menang/Kalah -->
       <div id="overlay">
         <h2 id="overlay-msg">Level Clear! 🎉</h2>
         <div class="btn-group">
@@ -252,14 +270,12 @@
 
   <script>
     // --- RESET ON REFRESH & LEGENDARY BOSSES ---
-    // 1. Hapus semua skor dan nama yang tersimpan sebelumnya di memori browser saat refresh
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith('dlicom_')) {
         localStorage.removeItem(key);
       }
     });
 
-    // 2. Suntikkan 2 Legenda abadi (MQadriah & Reez) ke Leaderboard
     const legendaryPlayers = [
       { id: 'mqadriah', name: 'MQadriah', level: 31 },
       { id: 'reez', name: 'Reez', level: 22 }
@@ -276,6 +292,7 @@
     const timerFill = document.getElementById('timer-fill');
     const timerLabel = document.getElementById('timer-label');
     const overlay = document.getElementById('overlay');
+    const pauseOverlay = document.getElementById('pause-overlay');
     const overlayMsg = document.getElementById('overlay-msg');
     const actionBtn = document.getElementById('action-btn');
     const menuBtn = document.getElementById('menu-btn');
@@ -291,6 +308,7 @@
     let timerInterval = null;
     let isGameOver = false;
     let hasWon = false;
+    let isPaused = false; // Status Pause Baru
 
     // --- LEADERBOARD LOGIC ---
     function updateLeaderboard(playerName, newBestLevel) {
@@ -490,7 +508,6 @@
     function closeInfoModal() { document.getElementById('info-modal').style.display = 'none'; }
 
     function showNameModal() {
-      // Karena kita hapus localStorage saat refresh, ini akan selalu kosong
       const savedName = localStorage.getItem('dlicom_last_player') || "";
       const nameInputEl = document.getElementById('player-name');
       nameInputEl.value = savedName;
@@ -505,12 +522,12 @@
       
       let playerKey = nameInput.toLowerCase();
 
-      // --- ANTI-IMPOSTER SYSTEM (PROTECT THE BOSSES) ---
+      // --- ANTI-IMPOSTER SYSTEM ---
       if (playerKey === 'mqadriah' || playerKey === 'reez') {
         alert("Nice try, imposter! The name '" + nameInput + "' is reserved for Legendary Bosses. Choose another name! 😂");
-        return; // Hentikan dan paksa ganti nama
+        return; 
       }
-      // ------------------------------------------------
+      // ----------------------------
 
       localStorage.setItem('dlicom_last_player', nameInput);
       document.getElementById('display-player-name').innerText = nameInput;
@@ -530,12 +547,36 @@
 
     function goMainMenu() {
       isGameOver = true;
+      isPaused = false;
       clearInterval(timerInterval);
       document.getElementById('overlay').style.display = 'none';
+      document.getElementById('pause-overlay').style.display = 'none';
       document.getElementById('game-container').style.display = 'none';
       document.getElementById('start-screen').style.display = 'flex';
       startMenuEffects(); 
     }
+
+    // --- PAUSE LOGIC ---
+    function togglePause() {
+      if (isGameOver) return; // Kalau udah Game Over / Menang gak bisa di-pause
+      
+      isPaused = !isPaused;
+      
+      if (isPaused) {
+        pauseOverlay.style.display = 'flex';
+        document.getElementById('pause-btn').innerText = '▶️';
+      } else {
+        pauseOverlay.style.display = 'none';
+        document.getElementById('pause-btn').innerText = '⏸️';
+      }
+    }
+
+    function goMainMenuFromPause() {
+      isPaused = false;
+      pauseOverlay.style.display = 'none';
+      goMainMenu();
+    }
+    // -------------------
 
     // Game Logic
     function generateLevel(levelIdx) {
@@ -637,8 +678,12 @@
       board.querySelectorAll('.arrow').forEach(el => el.remove());
       board.querySelectorAll('.penalty-text').forEach(el => el.remove());
       overlay.style.display = 'none';
+      pauseOverlay.style.display = 'none';
+      document.getElementById('pause-btn').innerText = '⏸️';
+      
       isGameOver = false;
       hasWon = false;
+      isPaused = false;
 
       levelLabel.innerText = `Level ${lvlIdx}`;
       const lvlData = generateLevel(lvlIdx);
@@ -674,6 +719,9 @@
     function startTimer() {
       updateTimerUI();
       timerInterval = setInterval(() => {
+        // Cek Pause
+        if (isPaused) return; 
+
         timeLeft -= 0.1;
         if (timeLeft <= 0) { timeLeft = 0; endGame(false); }
         updateTimerUI();
@@ -706,7 +754,8 @@
     }
 
     function tryMoveArrow(id, event, color) {
-      if (isGameOver) return;
+      if (isGameOver || isPaused) return; // Cegah panah diklik kalau lagi Pause
+      
       const target = arrows.find(a => a.id === id);
       if (!target) return;
 
